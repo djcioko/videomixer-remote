@@ -29,11 +29,17 @@
         /* Branding Text */
         #branding { position: absolute; z-index: 20; cursor: move; font-weight: 900; text-transform: uppercase; text-shadow: 2px 2px 10px #000; bottom: 80px; left: 40px; font-size: 40px; color: white; }
 
-        /* Panou Configurare (Apare doar la mouse-over în josul paginii) */
-        #setup-ui { position: fixed; bottom: 0; width: 100%; background: rgba(10,10,10,0.9); padding: 10px; z-index: 1000; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; border-top: 1px solid #333; transform: translateY(180px); transition: 0.3s; }
-        #setup-ui:hover { transform: translateY(0); }
-        .p-box { background: #1a1a1a; padding: 5px; border-radius: 5px; font-size: 10px; }
-        input[type="file"] { font-size: 10px; color: #888; width: 100%; }
+        /* Panou Configurare VIZIBIL */
+        #setup-ui { 
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: #111; padding: 15px; z-index: 1000; 
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; 
+            border-top: 3px solid var(--main); box-shadow: 0 -5px 20px rgba(0,0,0,0.5); 
+        }
+        .p-box { background: #1a1a1a; padding: 10px; border-radius: 5px; font-size: 11px; border: 1px solid #333; }
+        .p-box b { display: block; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 3px; color: var(--main); }
+        input[type="file"] { font-size: 10px; color: #aaa; width: 100%; margin-top: 5px; }
+        .btn-hide { position: absolute; top: -30px; right: 20px; background: var(--main); color: black; padding: 5px 15px; font-weight: bold; border-radius: 5px 5px 0 0; cursor: pointer; border: none; }
     </style>
 </head>
 <body>
@@ -55,25 +61,27 @@
 </div>
 
 <div id="setup-ui">
+    <button class="btn-hide" onclick="this.parentElement.style.display='none'">❌ ASCUNDE SETĂRILE</button>
+
     <div class="p-box">
-        <b style="color:var(--main)">📁 MEDIA</b><br>
-        Video: <input type="file" onchange="saveMedia(this, 'vid')">
-        Foto: <input type="file" onchange="saveMedia(this, 'img')">
+        <b>📁 1. FUNDALURI</b>
+        <label>Video Fundal: </label><input type="file" onchange="saveMedia(this, 'vid')">
+        <label>Foto Fundal: </label><input type="file" onchange="saveMedia(this, 'img')">
     </div>
     <div class="p-box">
-        <b style="color:var(--main)">📁 SLIDESHOW & LOGO</b><br>
-        Folder: <input type="file" webkitdirectory directory multiple onchange="saveMedia(this, 'slide')">
-        Logo Cerc: <input type="file" onchange="saveMedia(this, 'logo')">
+        <b>📁 2. LOGO & SLIDE</b>
+        <label>Logo Vumetru: </label><input type="file" onchange="saveMedia(this, 'logo')">
+        <label>Folder Slide-uri: </label><input type="file" webkitdirectory directory multiple onchange="saveMedia(this, 'slide')">
     </div>
     <div class="p-box">
-        <b style="color:var(--main)">⚙️ STATUS</b><br>
-        <div id="status-txt">Aștept fișiere...</div>
-        <button onclick="goFS()" style="background:blue; padding:3px; margin-top:5px; width:100%">FULLSCREEN</button>
+        <b>⚙️ 3. STATUS</b>
+        <div id="status-txt" style="margin-bottom: 10px;">Aștept fișiere...</div>
+        <button onclick="goFS()" style="background:#1d4ed8; color:white; padding:8px; width:100%; border-radius:3px; font-weight:bold;">MOD FULLSCREEN</button>
     </div>
     <div class="p-box">
-        <b style="color:var(--main)">🤖 AI</b><br>
-        <button onclick="startAI()" style="background:green; padding:5px; width:100%">1. PORNEȘTE AI</button>
-        <p style="font-size:8px">Apasă aici înainte de show!</p>
+        <b>🤖 4. ACTIVARE AI</b>
+        <button onclick="startAI()" style="background:#15803d; color:white; padding:10px; width:100%; border-radius:3px; font-weight:bold;">PORNEȘTE CAMERA (AI)</button>
+        <p style="font-size:9px; color:#888; margin-top:5px; text-align:center;">Apasă aici înainte de show!</p>
     </div>
 </div>
 
@@ -81,25 +89,27 @@
     // Configurare Firebase
     firebase.initializeApp({ databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" });
     const remoteDb = firebase.database().ref('remote_control_cioko');
-    
     let sFiles=[], sIdx=0, sTim;
 
-    // --- LOGICA DE MEMORARE (Regula ta: să țină minte fișierele) ---
+    // --- SALVARE MEDIA (Respectă regula ta de memorie) ---
     function saveMedia(input, type) {
         const files = Array.from(input.files);
         if(!files.length) return;
         
         const url = URL.createObjectURL(files[0]);
-        
-        if(type === 'vid') { document.getElementById('bg-v').src = url; localStorage.setItem('last_vid', 'set'); }
+        if(type === 'vid') { document.getElementById('bg-v').src = url; }
         if(type === 'img') { document.getElementById('bg-i').src = url; }
-        if(type === 'logo') { document.getElementById('inner-img').src = url; document.getElementById('inner-img').style.display='block'; }
+        if(type === 'logo') { 
+            const img = document.getElementById('inner-img');
+            img.src = url; 
+            img.style.display='block'; 
+        }
         if(type === 'slide') { sFiles = files.map(f => URL.createObjectURL(f)); }
         
-        document.getElementById('status-txt').innerText = "Fișiere salvate în memorie ✅";
+        document.getElementById('status-txt').innerText = "Fișiere salvate ✅";
     }
 
-    // --- TELECOMANDA (Ascultăm Adminul de pe telefon) ---
+    // --- TELECOMANDA (Firebase) ---
     remoteDb.on('value', (sn) => {
         const d = sn.val();
         if(!d || Date.now() - d.time > 10000) return;
@@ -118,11 +128,12 @@
 
     function showLayer(id) {
         document.querySelectorAll('#bg-v,#bg-i,#bg-s').forEach(e=>e.style.display='none');
-        document.getElementById(id).style.display = 'block';
-        if(id === 'bg-v') document.getElementById('bg-v').play();
+        const el = document.getElementById(id);
+        el.style.display = 'block';
+        if(id === 'bg-v') el.play();
     }
 
-    // --- MOTORUL AI (MediaPipe) ---
+    // --- AI CAMERA (MediaPipe) ---
     const selfieSegmentation = new SelfieSegmentation({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
     });
@@ -139,18 +150,21 @@
     });
 
     async function startAI() {
-        const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-        const v = document.getElementById('v-hidden');
-        v.srcObject = stream;
-        v.onloadedmetadata = () => {
-            v.play();
-            const predict = async () => {
-                await selfieSegmentation.send({image: v});
-                requestAnimationFrame(predict);
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+            const v = document.getElementById('v-hidden');
+            v.srcObject = stream;
+            v.onloadedmetadata = () => {
+                v.play();
+                const predict = async () => {
+                    await selfieSegmentation.send({image: v});
+                    requestAnimationFrame(predict);
+                };
+                predict();
             };
-            predict();
-        };
-        initVumetru(stream);
+            initVumetru(stream);
+            alert("Sistemul AI a pornit!");
+        } catch(e) { alert("Eroare camera!"); }
     }
 
     // --- VUMETRU ---
@@ -165,6 +179,7 @@
             requestAnimationFrame(draw); ans.getByteFrequencyData(data);
             c.clearRect(0,0,400,400);
             c.strokeStyle = "#ffffff"; c.lineWidth = 4;
+            c.shadowBlur = 10; c.shadowColor = "#ffffff";
             for(let i=0; i<60; i++){
                 let a = (i*6)*Math.PI/180, l = data[i] * 0.4;
                 c.beginPath(); 
@@ -175,7 +190,6 @@
         } draw();
     }
 
-    // --- UTILS ---
     function tgC() { 
         let b=document.getElementById('cam-box'); 
         b.style.display = (b.style.display==='block') ? 'none' : 'block'; 
@@ -186,20 +200,18 @@
         sIdx=(sIdx+1)%sFiles.length; 
         sTim = setTimeout(startS, 3000); 
     }
-    function goFS() { document.getElementById('viewport').requestFullscreen(); }
+    function goFS() { document.documentElement.requestFullscreen(); }
 
-    // DRAG AND DROP PENTRU POZITIONARE
     function drag(e) {
         let p1=0, p2=0, p3=0, p4=0;
         e.onmousedown = (m) => {
-            if(m.target.tagName === 'INPUT') return;
+            if(m.target.tagName === 'INPUT' || m.target.tagName === 'BUTTON') return;
             p3=m.clientX; p4=m.clientY;
             document.onmouseup = () => { document.onmouseup=null; document.onmousemove=null; };
             document.onmousemove = (m) => { p1=p3-m.clientX; p2=p4-m.clientY; p3=m.clientX; p4=m.clientY; e.style.top=(e.offsetTop-p2)+"px"; e.style.left=(e.offsetLeft-p1)+"px"; };
         };
     }
     [document.getElementById('circle-box'), document.getElementById('cam-box'), document.getElementById('branding')].forEach(drag);
-
 </script>
 </body>
 </html>
