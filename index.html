@@ -2,55 +2,49 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>MV STUDIO PRO - AI FIX</title>
+    <title>MV STUDIO PRO - INTEGRAT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation"></script>
     <style>
-        :root { --main: #ffaa00; --msg-size: 26px; } /* Re-added --msg-size */
-        body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; background: #000; overflow: hidden; color: white; }
-        #viewport { position: relative; width: 100%; height: calc(100% - 220px); background: #111; overflow: hidden; }
+        :root { --main: #ffaa00; --msg-size: 26px; }
+        body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; background: #000; overflow: hidden; color: white; font-family: sans-serif; }
         
-        /* Straturi */
+        #viewport { position: relative; width: 100%; height: calc(100% - 220px); background: #111; overflow: hidden; }
+        #viewport:fullscreen { height: 100vh; }
+
+        /* Straturi Fundal */
         #bg-v, #bg-i, #bg-s { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; z-index: 1; }
 
         /* Camera AI */
-        #cam-box { position: absolute; z-index: 10; cursor: move; display: none; top: 20px; right: 20px; line-height: 0; }
+        #cam-box { position: absolute; z-index: 10; cursor: move; display: none; top: 20px; right: 20px; }
         #ai-canvas { width: 450px; border: 1px solid rgba(255,255,255,0.2); }
         #v-hidden { display: none; }
 
-        /* Vumetrul Alb */
-        #circle-box { position: absolute; z-index: 15; cursor: move; width: 300px; height: 300px; display: flex; align-items: center; justify-content: center; top: 10%; left: 30%; }
+        /* Vumetrul */
+        #circle-box { position: absolute; z-index: 15; cursor: move; width: 300px; height: 300px; display: flex; align-items: center; justify-content: center; top: 10%; left: 30%; transition: transform 0.1s ease-out; }
         #radial-canvas { position: absolute; z-index: 16; pointer-events: none; }
         #inner-circle { width: 120px; height: 120px; border-radius: 50%; border: 3px solid #fff; background: #000; overflow: hidden; z-index: 17; display: flex; align-items: center; justify-content: center; }
         #inner-img { width: 100%; height: 100%; object-fit: cover; display: none; }
 
-        /* Branding */
-        #branding { position: absolute; z-index: 20; cursor: move; font-weight: 900; text-transform: uppercase; text-shadow: 2px 2px 10px #000; bottom: 80px; left: 40px; font-size: 40px; color: white; pointer-events: auto; }
+        /* Branding Principal */
+        #branding { position: absolute; z-index: 20; cursor: move; font-weight: 900; text-transform: uppercase; text-shadow: 2px 2px 10px #000; bottom: 80px; left: 40px; font-size: 40px; color: var(--main); }
 
-        /* MESAJ FIREBASE - Re-added styles */
+        /* Mesaje de la Invitati */
         #msg-box { position: absolute; z-index: 999; background: rgba(0, 0, 0, 0.85); border-left: 8px solid var(--main); padding: 20px; border-radius: 0 15px 15px 0; min-width: 320px; cursor: move; display: none; top: 200px; left: 50px; }
 
-
-        /* Control */
-        #controls { position: absolute; bottom: 0; width: 100%; height: 220px; background: #0a0a0a; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; padding: 10px; border-top: 2px solid #333; }
+        /* Panou Control Laptop */
+        #controls { position: absolute; bottom: 0; width: 100%; height: 220px; background: #0a0a0a; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; padding: 10px; border-top: 2px solid #333; z-index: 1000; }
         .panel { background: #1a1a1a; padding: 8px; border-radius: 5px; border: 1px solid #333; display: flex; flex-direction: column; gap: 4px; }
         .panel h3 { font-size: 9px; color: var(--main); text-align: center; font-weight: bold; border-bottom: 1px solid #333; margin-bottom: 2px; }
         .btn { width: 100%; padding: 6px; font-weight: bold; border-radius: 3px; text-transform: uppercase; font-size: 8px; cursor: pointer; border: none; }
-        .st-off { background: #441111; color: #ff5555; border: 1px solid #ff5555; }
-        .st-on { background: #114411; color: #55ff55; border: 1px solid #55ff55; }
-        .btn-blue { background: #1d4ed8; color: white; }
+        .st-off { background: #441111; color: #ff5555; }
+        .st-on { background: #114411; color: #55ff55; }
+        .btn-blue { background: #2563eb; color: white; }
         label { font-size: 8px; color: #999; }
         input { background: #000; color: #fff; border: 1px solid #444; font-size: 9px; }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/"
-  }
-}
-</script>
 </head>
 <body>
 
@@ -69,7 +63,6 @@
 
     <div id="branding">STUDIO MV</div>
 
-    <!-- Re-added Firebase Message Box HTML -->
     <div id="msg-box">
         <span id="msg-user" style="color:var(--main); font-weight:bold;">INVITAT</span><br>
         <span id="msg-txt" style="font-size:var(--msg-size);">Mesaj nou...</span>
@@ -80,8 +73,8 @@
     <div class="panel">
         <h3>1. MEDIA</h3>
         <label>Fundal (V/I):</label><input type="file" onchange="loadF(this, 'bg-v')">
-        <label>Folder Slide:</label><input type="file" webkitdirectory directory multiple onchange="loadFolder(this)">
-        <label>Logo Cerc:</label><input type="file" onchange="loadP(this)">
+        <label>Slide:</label><input type="file" webkitdirectory directory multiple onchange="loadFolder(this)">
+        <label>Logo:</label><input type="file" onchange="loadP(this)">
     </div>
 
     <div class="panel">
@@ -89,53 +82,86 @@
         <button id="btn-v" class="btn st-off" onclick="tgL('bg-v', 'btn-v')">VIDEO: OFF</button>
         <button id="btn-i" class="btn st-off" onclick="tgL('bg-i', 'btn-i')">FOTO: OFF</button>
         <button id="btn-s" class="btn st-off" onclick="tgL('bg-s', 'btn-s')">SLIDE: OFF</button>
-        <label>Secunde Slide:</label><input type="range" min="1" max="15" value="3" id="s-spd">
     </div>
 
     <div class="panel">
         <h3>3. CAMERA AI</h3>
-        <button class="btn btn-blue" onclick="startAI()">1. PORNEȘTE AI</button>
-        <button id="btn-cam" class="btn st-off" onclick="tgC()">2. AFIȘEAZĂ: OFF</button>
-        <label>Lățime:</label><input type="range" min="200" max="1000" value="450" oninput="document.getElementById('ai-canvas').style.width=this.value+'px'">
-        <label>Opacitate:</label><input type="range" min="0.1" max="1" step="0.1" value="1" oninput="document.getElementById('cam-box').style.opacity=this.value">
+        <button class="btn btn-blue" onclick="startAI()">PORNEȘTE CAMERA</button>
+        <button id="btn-cam" class="btn st-off" onclick="tgC()">AFIȘEAZĂ: OFF</button>
+        <input type="range" min="200" max="1000" value="450" oninput="document.getElementById('ai-canvas').style.width=this.value+'px'">
     </div>
 
     <div class="panel">
-        <h3>4. VUMETRU ALB</h3>
+        <h3>4. VUMETRU</h3>
         <button id="btn-png" class="btn st-off" onclick="tgP()">LOGO: OFF</button>
-        <label>Mărime:</label><input type="range" min="0.5" max="2" step="0.1" value="1" oninput="document.getElementById('circle-box').style.transform=`scale(${this.value})` ">
         <label>Sensibilitate:</label><input type="range" min="1" max="15" value="7" id="v-sens">
+        <label>Mărime:</label><input type="range" min="0.5" max="2" step="0.1" value="1" id="v-scale-input">
     </div>
 
     <div class="panel">
-        <h3>5. TEXT & FS</h3>
-        <input type="text" placeholder="SCRIE AICI..." oninput="document.getElementById('branding').innerText=this.value">
-        <label>Mărime:</label><input type="range" min="10" max="150" value="40" oninput="document.getElementById('branding').style.fontSize=this.value+'px'">
-        <label>Mărime Mesaj FB:</label> <!-- Re-added message font size slider -->
-        <input type="range" min="15" max="80" value="26" oninput="document.documentElement.style.setProperty('--msg-size', this.value+'px')">
-        <label>Timp Afișare:</label> <!-- Re-added message display time slider -->
-        <input type="range" min="2" max="30" value="8" id="m-time">
-        <button class="btn btn-blue mt-2" onclick="goFS()">FULL SCREEN</button>
+        <h3>5. SISTEM</h3>
+        <button class="btn btn-blue" onclick="goFS()">FULL SCREEN</button>
+        <button class="btn st-off mt-1" onclick="location.reload()">REFRESH</button>
+        <p class="text-[7px] text-center mt-2 text-zinc-500">CONTROLABIL DIN TELEFON</p>
     </div>
 </div>
 
 <script>
-    firebase.initializeApp({ databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" });
-    let db = firebase.database().ref('test_dj'), sFiles=[], sIdx=0, sTim;
-    let mTim; // Declared mTim for Firebase message timeout
+    // CONFIGURARE FIREBASE
+    const firebaseConfig = { databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(firebaseConfig);
+    const dbRemote = firebase.database().ref('remote_control_cioko');
+    const dbMessages = firebase.database().ref('test_dj');
 
-    // AI CAMERA LOGIC
+    let sFiles=[], sIdx=0, sTim, mTim;
+
+    // 1. ASCULTĂ TELECOMANDA (TELEFONUL)
+    function initRemoteListener() {
+        dbRemote.on('value', (snap) => {
+            const data = snap.val();
+            if(!data) return;
+
+            // Update Text Branding
+            if(data.text) document.getElementById('branding').innerText = data.text;
+            
+            // Update Culoare (CSS Variable)
+            if(data.color) {
+                document.documentElement.style.setProperty('--main', data.color);
+                document.getElementById('branding').style.color = data.color;
+            }
+
+            // Comenzi Speciale
+            if(data.cmd === 'TOGGLE_SETUP_UI') {
+                const ctrl = document.getElementById('controls');
+                ctrl.style.display = (ctrl.style.display === 'none') ? 'grid' : 'none';
+            }
+            if(data.cmd === 'RESET') location.reload();
+            if(data.cmd === 'FULLSCREEN') goFS();
+        });
+    }
+
+    // 2. ASCULTĂ MESAJE INVITAȚI
+    function listenMessages() {
+        dbMessages.limitToLast(1).on('child_added', (sn) => {
+            const d = sn.val();
+            const box = document.getElementById('msg-box');
+            document.getElementById('msg-user').innerText = d.author || "INVITAT";
+            document.getElementById('msg-txt').innerText = `"${d.text}"`;
+            box.style.display = 'block';
+            if(mTim) clearTimeout(mTim);
+            mTim = setTimeout(() => { box.style.display = 'none'; }, 8000);
+        });
+    }
+
+    // AI & VUMETRU
     const selfieSegmentation = new SelfieSegmentation({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
     });
     selfieSegmentation.setOptions({ modelSelection: 1 });
     selfieSegmentation.onResults(results => {
         const can = document.getElementById('ai-canvas'), ctx = can.getContext('2d');
-        if (!can || !ctx) return; // Add null check for canvas and context
-
         can.width = results.image.width; can.height = results.image.height;
-        ctx.save();
-        ctx.clearRect(0,0,can.width,can.height);
+        ctx.save(); ctx.clearRect(0,0,can.width,can.height);
         ctx.drawImage(results.segmentationMask, 0,0,can.width,can.height);
         ctx.globalCompositeOperation = 'source-in';
         ctx.drawImage(results.image, 0,0,can.width,can.height);
@@ -143,60 +169,34 @@
     });
 
     async function startAI() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-            const v = document.getElementById('v-hidden');
-            if (!v) { console.error("Hidden video element not found."); return; }
-            v.srcObject = stream;
-            // The video must be playing for MediaPipe to process frames.
-            v.onloadedmetadata = () => {
-                v.play();
-                const predict = async () => {
-                    if (v.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) { // Ensure video has data
-                        await selfieSegmentation.send({image: v});
-                    }
-                    requestAnimationFrame(predict);
-                };
-                predict();
+        const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+        const v = document.getElementById('v-hidden');
+        v.srcObject = stream;
+        v.onloadedmetadata = () => {
+            v.play();
+            const predict = async () => {
+                await selfieSegmentation.send({image: v});
+                requestAnimationFrame(predict);
             };
-            
-            initVumetru(stream);
-            listenFirebaseMessages(); // Start listening to Firebase messages when AI camera starts
-        } catch (err) {
-            console.error('Error accessing webcam or microphone for AI:', err);
-            alert('Nu s-a putut accesa camera web sau microfonul pentru AI. Asigură-te că permisiunile sunt acordate.');
-        }
+            predict();
+        };
+        initVumetru(stream);
     }
 
-    // VUMETRU ALB FIXAT
     function initVumetru(stream) {
         const can = document.getElementById('radial-canvas'), c = can.getContext('2d');
-        if (!can || !c) { console.error("Radial canvas or context not found."); return; }
-
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const src = ctx.createMediaStreamSource(stream);
         const ans = ctx.createAnalyser();
         ans.fftSize = 256; const data = new Uint8Array(ans.frequencyBinCount);
         src.connect(ans);
-        ans.connect(ctx.destination); // Connect to destination to ensure processing
-
         function draw() {
             requestAnimationFrame(draw); ans.getByteFrequencyData(data);
             c.clearRect(0,0,400,400);
             let sens = document.getElementById('v-sens').value / 5;
+            c.strokeStyle = "#ffffff"; c.lineWidth = 4;
+            c.shadowBlur = 10; c.shadowColor = "#ffffff";
             
-            c.strokeStyle = "#ffffff"; // ALB PUR
-            c.lineWidth = 4;
-            c.shadowBlur = 10; c.shadowColor = "#ffffff"; // EFECT GLOW
-            
-            // Adjust circle scaling based on overall audio volume
-            let sum = 0; for(let i=0; i<20; i++) sum += data[i]; // sum of low frequencies
-            let avg = sum / 20;
-            let dynamicScale = 1 + (avg / 255) * 0.15 * sens; // Factor in sensitivity
-            let baseScale = document.querySelector('#controls input[oninput*="circle-box"]').value;
-            document.getElementById('circle-box').style.transform = `scale(${baseScale * dynamicScale})`;
-
-
             for(let i=0; i<60; i++){
                 let a = (i*6)*Math.PI/180, l = data[i] * 0.4 * sens;
                 c.beginPath(); 
@@ -207,67 +207,42 @@
         } draw();
     }
 
-    // Firebase Message Listener - Re-added
-    function listenFirebaseMessages() {
-        db.limitToLast(1).on('child_added', (sn) => {
-            const d = sn.val();
-            const box = document.getElementById('msg-box');
-            const userSpan = document.getElementById('msg-user');
-            const textSpan = document.getElementById('msg-txt');
-            const messageTimeSlider = document.getElementById('m-time');
-
-            if (!box || !userSpan || !textSpan || !messageTimeSlider) {
-                console.error("Firebase message elements not found.");
-                return;
-            }
-
-            userSpan.innerText = d.author;
-            textSpan.innerText = `"${d.text}"`;
-            box.style.display = 'block';
-
-            if(mTim) clearTimeout(mTim);
-            mTim = setTimeout(() => { box.style.display = 'none'; }, Number(messageTimeSlider.value) * 1000);
-        });
+    // FUNCTII UI
+    function tgC() { 
+        let b=document.getElementById('cam-box'), btn=document.getElementById('btn-cam'); 
+        if(b.style.display==='block'){ b.style.display='none'; btn.className='btn st-off'; } 
+        else { b.style.display='block'; btn.className='btn st-on'; } 
     }
-
-    // UTILS
-    function tgC() { let b=document.getElementById('cam-box'), btn=document.getElementById('btn-cam'); if(b.style.display==='block'){b.style.display='none'; btn.className='btn st-off'; btn.innerText='2. AFIȘEAZĂ: OFF';} else {b.style.display='block'; btn.className='btn st-on'; btn.innerText='2. AFIȘEAZĂ: ON';} }
-    function loadF(i, id) { const f=i.files[0]; if(!f) return; const url=URL.createObjectURL(f); if(f.type.startsWith('image')) document.getElementById('bg-i').src=url; else {let v=document.getElementById('bg-v'); v.src=url; v.play();} }
-    function loadFolder(i) { sFiles = Array.from(i.files).filter(f => f.type.startsWith('image/')).map(f => URL.createObjectURL(f)); }
+    function loadF(i, id) { 
+        const f=i.files[0]; const url=URL.createObjectURL(f); 
+        if(f.type.startsWith('image')) { document.getElementById('bg-i').src=url; tgL('bg-i','btn-i'); } 
+        else { let v=document.getElementById('bg-v'); v.src=url; v.play(); tgL('bg-v','btn-v'); } 
+    }
     function tgL(id, bId) {
         document.querySelectorAll('#bg-v,#bg-i,#bg-s').forEach(e=>e.style.display='none');
-        document.getElementById('btn-v').className='btn st-off'; document.getElementById('btn-v').innerText='VIDEO: OFF';
-        document.getElementById('btn-i').className='btn st-off'; document.getElementById('btn-i').innerText='FOTO: OFF';
-        document.getElementById('btn-s').className='btn st-off'; document.getElementById('btn-s').innerText='SLIDE: OFF';
-        if(sTim) clearTimeout(sTim);
-
-        let el = document.getElementById(id);
-        let btn = document.getElementById(bId);
-
-        el.style.display='block';
-        btn.className='btn st-on';
-        btn.innerText=btn.innerText.split(':')[0]+': ON';
-
-        if(id==='bg-s') startS();
+        document.getElementById(id).style.display='block';
     }
-    function startS() { if(!sFiles.length) return; document.getElementById('bg-s').src=sFiles[sIdx]; sIdx=(sIdx+1)%sFiles.length; sTim = setTimeout(startS, document.getElementById('s-spd').value*1000); }
-    function loadP(i) { const f=i.files[0]; if(!f) return; document.getElementById('inner-img').src=URL.createObjectURL(f); document.getElementById('inner-img').style.display='block'; }
-    function tgP() { let e=document.getElementById('inner-img'), btn=document.getElementById('btn-png'); if(e.style.display==='none'){e.style.display='block'; btn.className='btn st-on'; btn.innerText='LOGO: ON';} else {e.style.display='none'; btn.className='btn st-off'; btn.innerText='LOGO: OFF';} }
-    function goFS() { let v=document.getElementById('viewport'); if(v.requestFullscreen) v.requestFullscreen(); }
+    function goFS() { 
+        let v=document.getElementById('viewport'); 
+        if(v.requestFullscreen) v.requestFullscreen(); 
+        else if(v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+    }
 
     function drag(e) {
         let p1=0, p2=0, p3=0, p4=0;
         e.onmousedown = (m) => {
-            if(m.target.tagName === 'INPUT' || m.target.tagName === 'BUTTON' || m.target.closest('input') || m.target.closest('button')) return; // Added closest for robustness
+            if(m.target.tagName === 'INPUT') return;
             p3=m.clientX; p4=m.clientY;
             document.onmouseup = () => { document.onmouseup=null; document.onmousemove=null; };
             document.onmousemove = (m) => { p1=p3-m.clientX; p2=p4-m.clientY; p3=m.clientX; p4=m.clientY; e.style.top=(e.offsetTop-p2)+"px"; e.style.left=(e.offsetLeft-p1)+"px"; };
         };
     }
-    // Added #msg-box to draggable elements
-    [document.getElementById('circle-box'), document.getElementById('cam-box'), document.getElementById('branding'), document.getElementById('msg-box')].forEach(element => {
-        if (element) drag(element); // Ensure element exists before trying to drag
-    });
+
+    // INITIALIZARE
+    initRemoteListener();
+    listenMessages();
+    [document.getElementById('circle-box'), document.getElementById('cam-box'), document.getElementById('branding'), document.getElementById('msg-box')].forEach(drag);
+
 </script>
 </body>
 </html>
