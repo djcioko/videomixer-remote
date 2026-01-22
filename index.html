@@ -2,36 +2,37 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>MV STUDIO - TOTAL CONTROL</title>
+    <title>MV STUDIO - VARIANTA FUNCȚIONALĂ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
     <style>
-        :root { --main-color: #ffaa00; }
+        :root { --main-color: #ffaa00; --pulse: 1; }
         body { background: #000; color: white; margin: 0; overflow: hidden; font-family: 'Arial Black', sans-serif; }
         #viewport { position: relative; width: 100vw; height: 100vh; background: #000; }
         #bg-video, #bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; display: none; }
 
         /* ELEMENTE MOBILE */
         .drag { position: absolute; cursor: move; z-index: 10; }
-        #webcam-layer { top: 20px; right: 20px; width: 400px; border: 2px solid var(--main-color); border-radius: 10px; overflow: hidden; background: #111; }
-        #webcam-video { width: 100%; height: auto; display: block; transform: scaleX(-1); }
+        #webcam-layer { top: 20px; right: 20px; width: 400px; transform: scale(1); }
+        #ai-canvas { width: 100%; border-radius: 10px; background: rgba(0,0,0,0.2); }
 
         #circle-group { top: 20%; left: 35%; width: 450px; height: 450px; display: flex; align-items: center; justify-content: center; }
         #radial-canvas { position: absolute; }
-        #inner-circle { width: 160px; height: 160px; border-radius: 50%; border: 6px solid var(--main-color); overflow: hidden; z-index: 11; background: #000; }
+        #inner-circle { width: 160px; height: 160px; border-radius: 50%; border: 6px solid var(--main-color); overflow: hidden; z-index: 11; background: #000; position: relative; }
         #inner-img { width: 100%; height: 100%; object-fit: cover; display: none; }
 
-        /* TEXT ALB LIBER (FĂRĂ FUNDAL) */
+        /* TEXT ALB LIBER */
         #text-box { 
-            bottom: 150px; left: 50px; font-size: 60px; font-weight: 900; color: white;
-            text-shadow: 3px 3px 15px rgba(0,0,0,0.8); white-space: nowrap; z-index: 20; 
+            bottom: 150px; left: 50px; font-size: 50px; font-weight: 900; color: white;
+            text-shadow: 3px 3px 15px rgba(0,0,0,0.9); white-space: nowrap; z-index: 20; 
         }
 
-        /* PANOU CONTROL */
-        .ui-container { position: fixed; bottom: 0; left: 0; width: 100%; display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; background: #111; padding: 15px; z-index: 1000; border-top: 3px solid var(--main-color); }
-        .cube { background: #1a1a1a; padding: 10px; border: 1px solid #333; text-align: center; border-radius: 5px; font-size: 11px; }
-        button { background: #333; width: 100%; padding: 8px; margin-top: 5px; font-weight: bold; border-radius: 4px; color: white; cursor: pointer; }
+        /* CONTROL JOS */
+        .ui-container { position: fixed; bottom: 0; left: 0; width: 100%; display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; background: #111; padding: 10px; z-index: 1000; border-top: 3px solid var(--main-color); }
+        .cube { background: #1a1a1a; padding: 8px; border: 1px solid #333; text-align: center; border-radius: 5px; font-size: 11px; }
+        button { background: #333; width: 100%; padding: 6px; margin-top: 5px; font-weight: bold; border-radius: 4px; color: white; }
         .btn-green { background: #15803d !important; }
     </style>
 </head>
@@ -40,78 +41,41 @@
 <div id="viewport">
     <video id="bg-video" autoplay loop muted playsinline></video>
     <img id="bg-img">
-    <div id="webcam-layer" class="drag"><video id="webcam-video" autoplay playsinline></video></div>
+    <div id="webcam-layer" class="drag"><canvas id="ai-canvas"></canvas></div>
     <div id="circle-group" class="drag">
         <canvas id="radial-canvas" width="450" height="450"></canvas>
         <div id="inner-circle"><img id="inner-img" src=""></div>
     </div>
-    <div id="text-box" class="drag">MV STUDIO PRO</div>
+    <div id="text-box" class="drag">BINE AȚI VENIT!</div>
 </div>
 
 <div class="ui-container" id="main-ui">
     <div class="cube"><b>1. VIDEO</b><input type="file" onchange="loadM(this,'v')"></div>
     <div class="cube"><b>2. SLIDESHOW</b><input type="file" multiple onchange="loadM(this,'s')"></div>
-    <div class="cube"><b>3. CAMERĂ</b><button onclick="startCamera()" class="btn-green">START CAM</button></div>
+    <div class="cube"><b>3. AI CAM</b><button onclick="startCam()" class="btn-green">START CAM</button><button onclick="isAI=!isAI">AI CUT</button></div>
     <div class="cube"><b>4. LOGO/VU</b><input type="file" onchange="loadM(this,'l')"></div>
     <div class="cube"><b>5. TEXT</b><input type="text" oninput="upTxt(this.value)"><input type="color" oninput="upCol(this.value)"></div>
     <div class="cube"><b>6. APP</b><button onclick="toggleUI()">ASCUNDE (H)</button><button onclick="location.reload()">RESET</button></div>
 </div>
 
+<video id="h-vid" style="display:none" autoplay muted playsinline></video>
+
 <script>
-    // --- CONECTARE FIREBASE (TELECOMANDĂ) ---
-    const firebaseConfig = { databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" };
-    firebase.initializeApp(firebaseConfig);
+    // 1. FIREBASE (TELECOMANDĂ)
+    const fbConfig = { databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(fbConfig);
     const db = firebase.database().ref('remote_control_cioko');
 
-    db.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
-        // Primire mesaje/text
-        if (data.text || data.val) { upTxt(data.text || data.val); }
-        // Primire culori
-        if (data.color) { upCol(data.color); }
-        // Comenzi UI
-        if (data.cmd === 'TOGGLE_SETUP_UI') toggleUI();
+    db.on('value', (sn) => {
+        const d = sn.val(); if (!d) return;
+        if (d.text || d.val) upTxt(d.text || d.val);
+        if (d.color) upCol(d.color);
+        if (d.cmd === 'TOGGLE_SETUP_UI') toggleUI();
     });
 
-    // --- VARIABILE GLOBALE ---
-    let audioCtx, analyzer, dataArray, slideImgs = [], slideIdx = 0, slideInt = null;
+    // 2. VARIABILE ȘI MEDIA
+    let isAI = false, audioCtx, analyzer, dataArray, slideImgs = [], slideIdx = 0, slideInt = null;
 
-    // --- FUNCȚIE CAMERĂ ---
-    async function startCamera() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            document.getElementById('webcam-video').srcObject = stream;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const source = audioCtx.createMediaStreamSource(stream);
-            analyzer = audioCtx.createAnalyser();
-            analyzer.fftSize = 256;
-            dataArray = new Uint8Array(analyzer.frequencyBinCount);
-            source.connect(analyzer);
-            drawVu();
-        } catch (err) { alert("Eroare Cameră: " + err.message); }
-    }
-
-    // --- VU-METER ---
-    function drawVu() {
-        requestAnimationFrame(drawVu);
-        if (!analyzer) return;
-        analyzer.getByteFrequencyData(dataArray);
-        const cv = document.getElementById('radial-canvas'), ctx = cv.getContext('2d');
-        ctx.clearRect(0, 0, 450, 450);
-        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--main-color');
-        ctx.lineWidth = 5;
-        for (let i = 0; i < 60; i++) {
-            const val = dataArray[i] * 0.5;
-            const a = (i * 6) * Math.PI / 180;
-            ctx.beginPath();
-            ctx.moveTo(225 + Math.cos(a) * 90, 225 + Math.sin(a) * 90);
-            ctx.lineTo(225 + Math.cos(a) * (90 + val), 225 + Math.sin(a) * (90 + val));
-            ctx.stroke();
-        }
-    }
-
-    // --- MEDIA (VIDEO, SLIDESHOW, LOGO) ---
     function loadM(input, type) {
         const files = Array.from(input.files);
         if (type === 'v') {
@@ -136,22 +100,68 @@
         }
     }
 
-    // --- DRAG AND DROP ---
+    // 3. CAMERA AI ȘI VU-METER
+    async function startCam() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('h-vid').srcObject = stream;
+            
+            // Audio setup
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const src = audioCtx.createMediaStreamSource(stream);
+            analyzer = audioCtx.createAnalyser(); analyzer.fftSize = 256;
+            dataArray = new Uint8Array(analyzer.frequencyBinCount);
+            src.connect(analyzer);
+            drawVu();
+
+            // AI Setup
+            const selfie = new SelfieSegmentation({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`});
+            selfie.setOptions({modelSelection: 1});
+            selfie.onResults(res => {
+                const cv = document.getElementById('ai-canvas'), ctx = cv.getContext('2d');
+                cv.width = res.image.width; cv.height = res.image.height;
+                ctx.save(); ctx.clearRect(0,0,cv.width,cv.height);
+                if(isAI) { ctx.drawImage(res.segmentationMask, 0, 0, cv.width, cv.height); ctx.globalCompositeOperation = 'source-in'; }
+                ctx.drawImage(res.image, 0, 0, cv.width, cv.height); ctx.restore();
+            });
+            async function predict() { await selfie.send({image: document.getElementById('h-vid')}); requestAnimationFrame(predict); }
+            predict();
+        } catch (e) { alert("Eroare: " + e.message); }
+    }
+
+    function drawVu() {
+        requestAnimationFrame(drawVu);
+        if (!analyzer) return;
+        analyzer.getByteFrequencyData(dataArray);
+        const cv = document.getElementById('radial-canvas'), ctx = cv.getContext('2d');
+        ctx.clearRect(0, 0, 450, 450);
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--main-color');
+        ctx.lineWidth = 5;
+        for (let i = 0; i < 60; i++) {
+            const val = dataArray[i] * 0.5;
+            const a = (i * 6) * Math.PI / 180;
+            ctx.beginPath();
+            ctx.moveTo(225 + Math.cos(a) * 90, 225 + Math.sin(a) * 90);
+            ctx.lineTo(225 + Math.cos(a) * (90 + val), 225 + Math.sin(a) * (90 + val));
+            ctx.stroke();
+        }
+    }
+
+    // 4. DRAG LOGIC
     document.querySelectorAll('.drag').forEach(el => {
-        let px = 0, py = 0;
+        let x = 0, y = 0;
         el.onmousedown = (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-            px = e.clientX; py = e.clientY;
+            x = e.clientX; y = e.clientY;
             document.onmousemove = (ev) => {
-                el.style.left = (el.offsetLeft - (px - ev.clientX)) + "px";
-                el.style.top = (el.offsetTop - (py - ev.clientY)) + "px";
-                px = ev.clientX; py = ev.clientY;
+                el.style.left = (el.offsetLeft - (x - ev.clientX)) + "px";
+                el.style.top = (el.offsetTop - (y - ev.clientY)) + "px";
+                x = ev.clientX; y = ev.clientY;
             };
             document.onmouseup = () => { document.onmousemove = null; };
         };
     });
 
-    // --- UTILS ---
     function upTxt(v) { document.getElementById('text-box').innerText = v; }
     function upCol(v) { document.documentElement.style.setProperty('--main-color', v); }
     function toggleUI() { 
