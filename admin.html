@@ -2,70 +2,102 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADMIN MV STUDIO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MV STUDIO - ADMIN REMOTE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { background: #050505; color: white; font-family: sans-serif; }
-        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { 
-            padding: 18px 5px; border-radius: 8px; font-weight: bold; 
-            font-size: 11px; text-transform: uppercase; border: 1px solid #333;
-            transition: 0.1s; background: #111;
-        }
-        .btn:active { background: #ffaa00; color: black; transform: scale(0.96); }
-        .btn-green { background: #065f46; border-color: #059669; }
-        .btn-orange { background: #9a3412; border-color: #ea580c; }
-        .btn-gray { background: #374151; border-color: #4b5563; }
+        body { background-color: #09090b; touch-action: manipulation; }
+        .active-btn:active { transform: scale(0.96); background-color: #c2410c; }
     </style>
 </head>
-<body class="p-4">
+<body class="text-zinc-100 font-sans pb-10">
 
-    <h2 class="text-orange-500 text-center font-black mb-4 tracking-widest">MV STUDIO CONTROL</h2>
-
-    <p class="text-[10px] text-gray-500 mb-2 font-bold">SCHIMBĂ FUNDALUL PE LAPTOP:</p>
-    <div class="grid-layout mb-6">
-        <button class="btn btn-orange" onclick="sendCmd('TOGGLE_VIDEO')">🎬 FUNDAL VIDEO</button>
-        <button class="btn btn-orange" onclick="sendCmd('TOGGLE_PHOTO')">🖼️ FUNDAL FOTO</button>
-        <button class="btn btn-orange" onclick="sendCmd('TOGGLE_SLIDE')">🎞️ START SLIDESHOW</button>
-        <button class="btn" onclick="sendCmd('TOGGLE_CAM')">👤 CAMERA ON/OFF</button>
-    </div>
-
-    <p class="text-[10px] text-gray-500 mb-2 font-bold">CONTROL SISTEM LAPTOP:</p>
-    <div class="grid-layout mb-6">
-        <button class="btn btn-green" onclick="sendCmd('START_AI')">🚀 PORNEȘTE AI</button>
-        <button class="btn btn-gray" onclick="sendCmd('TOGGLE_SETUP_UI')">⚙️ PANEL ON/OFF</button>
-    </div>
-
-    <div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
-        <p class="text-[10px] text-gray-500 mb-2 font-bold text-center">MODIFICĂ TEXTUL:</p>
-        <input type="text" id="txtInput" class="w-full bg-black border border-gray-700 p-3 rounded mb-3 text-white text-center" placeholder="Ex: GINA LIVE">
-        <button class="w-full bg-orange-500 text-black font-black py-3 rounded shadow-lg" onclick="sendText()">TRIMITE PE ECRAN</button>
-        
-        <div class="flex gap-2 mt-3">
-            <button class="btn flex-1" onclick="sendVal('SET_BRANDING_SIZE', 25)">TEXT MIC</button>
-            <button class="btn flex-1" onclick="sendVal('SET_BRANDING_SIZE', 70)">TEXT MARE</button>
+    <div class="bg-zinc-900 border-b border-orange-600/50 p-5 text-center sticky top-0 z-50 shadow-lg">
+        <h1 class="text-orange-500 font-black tracking-tighter text-2xl">MV STUDIO ADMIN</h1>
+        <div class="flex justify-center gap-2 mt-1">
+            <span id="status-dot" class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <p class="text-[10px] text-zinc-400 uppercase tracking-widest leading-none">Conectat la Laptop</p>
         </div>
     </div>
 
+    <div class="p-4 space-y-6">
+        
+        <div class="bg-zinc-900 p-5 rounded-2xl border border-zinc-800 shadow-xl">
+            <label class="block text-[10px] font-bold text-zinc-500 mb-3 uppercase tracking-widest">Branding (Text Ecran)</label>
+            <input id="msg" type="text" placeholder="STUDIO MV..." 
+                   class="w-full bg-zinc-950 border border-zinc-700 p-4 rounded-xl text-white focus:border-orange-500 outline-none transition-all text-lg">
+            <button onclick="sendText()" 
+                    class="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 rounded-xl mt-4 active-btn shadow-lg shadow-orange-900/20 uppercase tracking-tighter">
+                ACTUALIZEAZĂ TEXTUL
+            </button>
+        </div>
+
+        <div class="bg-zinc-900 p-5 rounded-2xl border border-zinc-800 shadow-xl">
+            <label class="block text-[10px] font-bold text-zinc-500 mb-3 uppercase tracking-widest">Culoare Sistem (VU & Text)</label>
+            <div class="flex gap-4 items-center">
+                <input id="col" type="color" value="#ffaa00" oninput="sendColor(this.value)" 
+                       class="w-24 h-24 bg-transparent border-none cursor-pointer rounded-full">
+                <div class="flex-1">
+                    <p class="text-sm text-zinc-300 font-medium">Atinge cercul</p>
+                    <p class="text-[11px] text-zinc-500 italic">Schimbă nuanța logo-ului și a vumetrului în timp real.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <button onclick="sendCmd('FULLSCREEN')" 
+                    class="bg-blue-600 hover:bg-blue-500 p-6 rounded-2xl flex flex-col items-center justify-center active-btn border border-blue-400/30 shadow-xl shadow-blue-900/20">
+                <span class="text-3xl mb-2">📺</span>
+                <span class="text-xs font-black uppercase tracking-tighter text-white">Full Screen</span>
+            </button>
+            
+            <button onclick="sendCmd('RESET')" 
+                    class="bg-zinc-800 hover:bg-zinc-700 p-6 rounded-2xl flex flex-col items-center justify-center active-btn border border-zinc-700 shadow-xl">
+                <span class="text-3xl mb-2">🔄</span>
+                <span class="text-xs font-black uppercase tracking-tighter text-zinc-300">Restart App</span>
+            </button>
+        </div>
+
+        <button onclick="sendCmd('TOGGLE_SETUP_UI')" 
+                class="w-full bg-zinc-950 border-2 border-dashed border-zinc-800 p-4 rounded-xl text-zinc-500 font-bold text-xs uppercase active-btn">
+            Ascunde / Arată Butoanele pe Laptop
+        </button>
+
+    </div>
+
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-white text-black px-6 py-2 rounded-full font-bold text-sm shadow-2xl opacity-0 transition-opacity pointer-events-none">
+        COMANDĂ TRIMISĂ!
+    </div>
+
     <script>
-        // Configurare Firebase
-        firebase.initializeApp({ databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" });
+        // ACEEAȘI CONFIGURARE CA PE LAPTOP
+        const config = { databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" };
+        firebase.initializeApp(config);
         const db = firebase.database().ref('remote_control_cioko');
 
-        function sendCmd(command) {
-            db.set({ cmd: command, time: Date.now() });
+        function showToast() {
+            const t = document.getElementById('toast');
+            t.classList.remove('opacity-0');
+            setTimeout(() => t.classList.add('opacity-0'), 1500);
         }
 
         function sendText() {
-            const val = document.getElementById('txtInput').value;
-            db.set({ cmd: 'SET_TEXT', val: val, time: Date.now() });
+            const val = document.getElementById('msg').value;
+            if(!val) return;
+            db.update({ text: val, time: Date.now() });
+            showToast();
         }
 
-        function sendVal(command, value) {
-            db.set({ cmd: command, val: value, time: Date.now() });
+        function sendColor(c) {
+            db.update({ color: c });
+        }
+
+        function sendCmd(command) {
+            // Trimitem comanda și un timestamp ca laptopul să știe că e o comandă nouă
+            db.update({ cmd: command, time: Date.now() });
+            showToast();
         }
     </script>
 </body>
