@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MV STUDIO ULTIMATE - FULL STACK</title>
+    <title>MV STUDIO - RECOVERY MODE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -12,29 +12,41 @@
         :root { --main-color: #ff0000; --pulse: 1; --cerc-scale: 1; --cam-scale: 1; }
         body { background: #000; color: white; font-family: sans-serif; margin: 0; overflow: hidden; }
 
-        #viewport { position: relative; width: 100vw; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        #viewport { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #000; }
+        
+        /* STRATURI */
         #bg-video, #bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; display: none; }
 
-        /* CAMERA AI */
-        #webcam-layer { position: absolute; z-index: 10; transform: scale(var(--cam-scale)); top: 20px; right: 20px; width: 320px; height: 240px; }
-        #ai-canvas { width: 100%; height: 100%; border-radius: 10px; }
+        /* CAMERA AI - REPOZITIONATA */
+        #webcam-layer { position: absolute; z-index: 10; top: 20px; right: 20px; width: 320px; height: 240px; transform: scale(var(--cam-scale)); }
+        #ai-canvas { width: 100%; height: 100%; border: 2px solid #333; border-radius: 8px; background: #111; }
 
-        /* VU-METRU CERC */
-        #circle-group { position: absolute; width: 300px; height: 300px; z-index: 15; transform: scale(calc(var(--pulse) * var(--cerc-scale))); }
-        #radial-canvas { position: absolute; top: -75px; left: -75px; pointer-events: none; }
-        #inner-circle { width: 160px; height: 160px; border-radius: 50%; border: 4px solid var(--main-color); overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; position: relative; z-index: 16; }
+        /* VU-METRU CENTRAL */
+        #circle-group { 
+            position: absolute; z-index: 15; 
+            top: 50%; left: 50%; 
+            transform: translate(-50%, -50%) scale(calc(var(--pulse) * var(--cerc-scale))); 
+            width: 400px; height: 400px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #radial-canvas { position: absolute; top: 0; left: 0; pointer-events: none; }
+        #inner-circle { 
+            width: 160px; height: 160px; border-radius: 50%; 
+            border: 4px solid var(--main-color); overflow: hidden; 
+            background: #000; z-index: 16; position: relative;
+        }
         #inner-img { width: 100%; height: 100%; object-fit: cover; display: none; }
 
-        /* TICKER MESAJE */
-        #branding-container { position: absolute; bottom: 80px; left: 0; width: 100%; height: 50px; background: rgba(0,0,0,0.7); border-top: 2px solid var(--main-color); border-bottom: 2px solid var(--main-color); z-index: 20; overflow: hidden; display: flex; align-items: center; }
-        #branding { white-space: nowrap; font-weight: 900; font-size: 30px; text-transform: uppercase; padding-left: 100%; animation: marquee 15s linear infinite; }
+        /* TEXT JOS */
+        #branding-container { position: absolute; bottom: 80px; left: 0; width: 100%; height: 50px; background: rgba(0,0,0,0.8); border-top: 2px solid var(--main-color); z-index: 20; overflow: hidden; }
+        #branding { white-space: nowrap; font-weight: 900; font-size: 32px; line-height: 50px; padding-left: 100%; animation: marquee 15s linear infinite; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        /* UI */
-        .ui-container { position: fixed; bottom: 0; left: 0; width: 100%; display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; background: #111; padding: 10px; z-index: 1000; border-top: 2px solid var(--main-color); font-size: 10px; }
-        .cube { background: #1a1a1a; padding: 5px; border: 1px solid #333; }
-        button { background: #333; width: 100%; padding: 4px; margin-top: 2px; cursor: pointer; font-weight: bold; }
-        h4 { color: var(--main-color); margin-bottom: 4px; border-bottom: 1px solid #222; text-align: center; }
+        /* MENIU CONTROL */
+        .ui-container { position: fixed; bottom: 0; left: 0; width: 100%; display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; background: #111; padding: 10px; z-index: 1000; border-top: 2px solid var(--main-color); }
+        .cube { background: #1a1a1a; padding: 5px; border: 1px solid #333; font-size: 11px; }
+        button { background: #333; width: 100%; padding: 5px; margin-top: 3px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        input { width: 100%; background: #222; color: white; border: 1px solid #444; }
     </style>
 </head>
 <body>
@@ -45,118 +57,99 @@
     
     <div id="webcam-layer"><canvas id="ai-canvas"></canvas></div>
     
-    <div id="circle-group" style="left: 35%; top: 25%;">
-        <canvas id="radial-canvas" width="450" height="450"></canvas>
+    <div id="circle-group">
+        <canvas id="radial-canvas" width="400" height="400"></canvas>
         <div id="inner-circle"><img id="inner-img" src=""></div>
     </div>
 
-    <div id="branding-container"><div id="branding">MV STUDIO VĂ SALUTĂ!</div></div>
+    <div id="branding-container"><div id="branding">MV STUDIO - SISTEM ACTIV</div></div>
 </div>
 
 <div class="ui-container" id="main-ui">
-    <div class="cube"><h4>1. VIDEO</h4><input type="file" onchange="loadMedia(this, 'v')"><button onclick="toggleLayer('bg-video')">ON/OFF</button></div>
-    <div class="cube"><h4>2. SLIDE/FOTO</h4><input type="file" multiple onchange="loadMedia(this, 'i')"><button onclick="toggleLayer('bg-img')">ON/OFF</button></div>
-    <div class="cube"><h4>3. AI CAM</h4><button onclick="startCamera()" style="background:#22c55e">START CAM</button><button onclick="isAI=!isAI">AI CUT ON/OFF</button></div>
-    <div class="cube"><h4>4. VU/LOGO</h4><input type="file" onchange="loadMedia(this, 'l')"><button onclick="toggleLogo()">LOGO ON/OFF</button></div>
-    <div class="cube"><h4>5. TEXT/COL</h4><input type="text" placeholder="Mesaj..." oninput="updateText(this.value)"><input type="color" oninput="updateColor(this.value)"></div>
-    <div class="cube"><h4>6. SYS</h4><button onclick="toggleUI()">ASCUNDE (H)</button><button onclick="location.reload()">RESET</button></div>
+    <div class="cube"><b>1. VIDEO</b><input type="file" onchange="loadF(this,'v')"><button onclick="tgL('v')">ON/OFF</button></div>
+    <div class="cube"><b>2. FOTO/SLIDE</b><input type="file" multiple onchange="loadF(this,'i')"><button onclick="tgL('i')">ON/OFF</button></div>
+    <div class="cube"><b>3. AI CAM</b><button onclick="initCamera()" style="background:#15803d">START</button><button onclick="isAI=!isAI">AI TOGGLE</button></div>
+    <div class="cube"><b>4. LOGO</b><input type="file" onchange="loadF(this,'l')"><button onclick="tgLogo()">ON/OFF</button></div>
+    <div class="cube"><b>5. TEXT</b><input type="text" oninput="upT(this.value)"><input type="color" oninput="upC(this.value)"></div>
+    <div class="cube"><b>6. APP</b><button onclick="toggleUI()">ASCUNDE (H)</button><button onclick="location.reload()">RESTART</button></div>
 </div>
 
-<video id="hidden-video" style="display:none" autoplay muted playsinline></video>
+<video id="h-vid" style="display:none" autoplay muted playsinline></video>
 
 <script>
-    const firebaseConfig = { databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" };
-    firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp({ databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" });
     const db = firebase.database().ref('remote_control_cioko');
 
     let isAI = false, isLogo = false, audioCtx, analyzer, dataArray;
-    let slideImages = [], slideIndex = 0, slideInterval = null;
+    let slideImgs = [], slideIdx = 0, slideInt = null;
 
-    // --- FIREBASE RECEIVER ---
+    // FIREBASE
     db.on('value', sn => {
-        const data = sn.val(); if(!data) return;
-        if(data.text || data.val) { updateText(data.text || data.val); }
-        if(data.time && Date.now() - data.time < 5000) {
-            if(data.cmd === 'TOGGLE_VIDEO') toggleLayer('bg-video');
-            if(data.cmd === 'TOGGLE_PHOTO') toggleLayer('bg-img');
-            if(data.cmd === 'TOGGLE_SETUP_UI') toggleUI();
+        const d = sn.val(); if(!d) return;
+        if(d.text || d.val) upT(d.text || d.val);
+        if(d.time && Date.now() - d.time < 5000) {
+            if(d.cmd === 'TOGGLE_VIDEO') tgL('v');
+            if(d.cmd === 'TOGGLE_PHOTO') tgL('i');
+            if(d.cmd === 'TOGGLE_SETUP_UI') toggleUI();
         }
     });
 
-    // --- MEDIA LOADER ---
-    function loadMedia(input, type) {
-        if(type === 'v') {
-            document.getElementById('bg-video').src = URL.createObjectURL(input.files[0]);
-            toggleLayer('bg-video');
-        } else if(type === 'i') {
-            slideImages = Array.from(input.files).map(file => URL.createObjectURL(file));
-            startSlideshow();
-            toggleLayer('bg-img');
-        } else if(type === 'l') {
-            document.getElementById('inner-img').src = URL.createObjectURL(input.files[0]);
-            isLogo = true; document.getElementById('inner-img').style.display = 'block';
+    // MEDIA
+    function loadF(input, type) {
+        const files = Array.from(input.files);
+        if(type === 'v') { document.getElementById('bg-video').src = URL.createObjectURL(files[0]); tgL('v'); }
+        if(type === 'i') {
+            slideImgs = files.map(f => URL.createObjectURL(f));
+            slideIdx = 0; 
+            document.getElementById('bg-img').src = slideImgs[0];
+            if(slideInt) clearInterval(slideInt);
+            if(slideImgs.length > 1) slideInt = setInterval(() => { slideIdx = (slideIdx+1)%slideImgs.length; document.getElementById('bg-img').src = slideImgs[slideIdx]; }, 5000);
+            tgL('i');
         }
+        if(type === 'l') { document.getElementById('inner-img').src = URL.createObjectURL(files[0]); isLogo = true; document.getElementById('inner-img').style.display = 'block'; }
     }
 
-    function startSlideshow() {
-        if(slideInterval) clearInterval(slideInterval);
-        if(slideImages.length === 0) return;
-        const img = document.getElementById('bg-img');
-        img.src = slideImages[0];
-        if(slideImages.length > 1) {
-            slideInterval = setInterval(() => {
-                slideIndex = (slideIndex + 1) % slideImages.length;
-                img.src = slideImages[slideIndex];
-            }, 5000); // Schimbă la 5 secunde
-        }
-    }
-
-    function toggleLayer(id) {
+    function tgL(t) {
         const v = document.getElementById('bg-video'), i = document.getElementById('bg-img');
-        v.style.display = (id === 'bg-video' && v.style.display !== 'block') ? 'block' : 'none';
-        i.style.display = (id === 'bg-img' && i.style.display !== 'block') ? 'block' : 'none';
+        if(t === 'v') { v.style.display = 'block'; i.style.display = 'none'; }
+        else { i.style.display = 'block'; v.style.display = 'none'; }
     }
 
-    function toggleLogo() {
-        isLogo = !isLogo;
-        document.getElementById('inner-img').style.display = isLogo ? 'block' : 'none';
-    }
+    function tgLogo() { isLogo = !isLogo; document.getElementById('inner-img').style.display = isLogo ? 'block' : 'none'; }
 
-    // --- AI CAMERA (WEBGL OPTIMIZED) ---
-    async function startCamera() {
+    // CAMERA & AI
+    async function initCamera() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({video: {width: 640, height: 480}, audio: true});
-            document.getElementById('hidden-video').srcObject = stream;
-            initAudio(stream);
+            const stream = await navigator.mediaDevices.getUserMedia({video: {width: 480, height: 360}, audio: true});
+            document.getElementById('h-vid').srcObject = stream;
+            setupAudio(stream);
 
             const selfie = new SelfieSegmentation({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`});
-            selfie.setOptions({modelSelection: 1});
-            selfie.onResults(onResults);
+            selfie.setOptions({modelSelection: 0}); // 0 e mai rapid pt laptopuri slabe
+            selfie.onResults(res => {
+                const cv = document.getElementById('ai-canvas'), ctx = cv.getContext('2d');
+                cv.width = res.image.width; cv.height = res.image.height;
+                ctx.save(); ctx.clearRect(0,0,cv.width,cv.height);
+                if(isAI) {
+                    ctx.drawImage(res.segmentationMask, 0, 0, cv.width, cv.height);
+                    ctx.globalCompositeOperation = 'source-in';
+                }
+                ctx.drawImage(res.image, 0, 0, cv.width, cv.height);
+                ctx.restore();
+            });
 
-            async function predict() { await selfie.send({image: document.getElementById('hidden-video')}); requestAnimationFrame(predict); }
-            predict();
-        } catch(err) { alert("GPU/Camera Error: " + err); }
+            async function run() { await selfie.send({image: document.getElementById('h-vid')}); requestAnimationFrame(run); }
+            run();
+        } catch(e) { console.error(e); }
     }
 
-    function onResults(results) {
-        const canvas = document.getElementById('ai-canvas'), ctx = canvas.getContext('2d');
-        canvas.width = results.image.width; canvas.height = results.image.height;
-        ctx.save(); ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if(isAI) {
-            ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
-            ctx.globalCompositeOperation = 'source-in';
-        }
-        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-        ctx.restore();
-    }
-
-    // --- VU-METER ---
-    function initAudio(stream) {
+    // VU-METER (CENTRAT CORECT)
+    function setupAudio(s) {
         audioCtx = new AudioContext();
-        const source = audioCtx.createMediaStreamSource(stream);
+        const src = audioCtx.createMediaStreamSource(s);
         analyzer = audioCtx.createAnalyser(); analyzer.fftSize = 64;
         dataArray = new Uint8Array(analyzer.frequencyBinCount);
-        source.connect(analyzer);
+        src.connect(analyzer);
         drawVu();
     }
 
@@ -164,29 +157,29 @@
         requestAnimationFrame(drawVu);
         analyzer.getByteFrequencyData(dataArray);
         const cv = document.getElementById('radial-canvas'), ctx = cv.getContext('2d');
-        ctx.clearRect(0,0,450,450);
+        ctx.clearRect(0,0,400,400);
         let sum = 0;
         ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--main-color');
-        ctx.lineWidth = 4;
-        for(let i=0; i<30; i++) {
-            const val = dataArray[i] * 0.5; sum += val;
-            const rad = (i * 12) * Math.PI / 180;
+        ctx.lineWidth = 5;
+        for(let i=0; i<32; i++) {
+            const h = dataArray[i] * 0.5; sum += h;
+            const ang = (i * 11.25) * Math.PI / 180;
             ctx.beginPath();
-            ctx.moveTo(225 + Math.cos(rad)*85, 225 + Math.sin(rad)*85);
-            ctx.lineTo(225 + Math.cos(rad)*(85+val), 225 + Math.sin(rad)*(85+val));
+            // Centrul e la 200, 200 (jumatatea lui 400x400)
+            ctx.moveTo(200 + Math.cos(ang)*85, 200 + Math.sin(ang)*85);
+            ctx.lineTo(200 + Math.cos(ang)*(85+h), 200 + Math.sin(ang)*(85+h));
             ctx.stroke();
         }
         document.documentElement.style.setProperty('--pulse', 1 + (sum/3000));
     }
 
-    // --- UTILS ---
-    function updateText(v) { 
+    // UTILS
+    function upT(v) { 
         const b = document.getElementById('branding'); b.innerText = v;
         b.style.animation = 'none'; b.offsetHeight; b.style.animation = 'marquee 15s linear infinite';
     }
-    function updateColor(v) { document.documentElement.style.setProperty('--main-color', v); }
+    function upC(v) { document.documentElement.style.setProperty('--main-color', v); }
     function toggleUI() { const u = document.getElementById('main-ui'); u.style.display = u.style.display==='none'?'grid':'none'; }
-    
     document.addEventListener('keydown', e => { if(e.key.toLowerCase()==='h') toggleUI(); });
 </script>
 </body>
