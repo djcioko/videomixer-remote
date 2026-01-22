@@ -3,286 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MV STUDIO ULTIMATE - PRO CONTROL</title>
+    <title>MV STUDIO PRO - REPARAT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
     <style>
-        :root { 
-            --main-color: #ffaa00; 
-            --pulse: 1; --cerc-scale: 1; --cam-scale: 1; --text-scale: 1;
-        }
+        :root { --main-color: #ff0000; --pulse: 1; --cerc-scale: 1; --cam-scale: 1; }
         body { background: #000; color: white; font-family: sans-serif; margin: 0; overflow: hidden; }
 
-        /* VIEWPORT PRINCIPAL */
-        #viewport {
-            position: relative;
-            width: 100vw; height: 100vh;
-            background: #000;
-            overflow: hidden;
-            display: flex; align-items: center; justify-content: center;
-        }
+        #viewport { position: relative; width: 100vw; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        #bg-video, #bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; display: none; }
 
-        /* STRATURI FUNDAL */
-        #bg-video, #bg-img { 
-            position: absolute; inset: 0; width: 100%; height: 100%; 
-            object-fit: cover; z-index: 1; display: none; 
-        }
+        #webcam-layer { position: absolute; z-index: 10; transform: scale(var(--cam-scale)); top: 20px; right: 20px; width: 320px; height: 240px; }
+        #ai-canvas { width: 100%; height: 100%; border-radius: 10px; }
 
-        /* WEBCAM AI */
-        #webcam-layer { 
-            position: absolute; z-index: 10; cursor: grab;
-            transform: scale(var(--cam-scale));
-        }
-        #ai-canvas { width: 100%; height: 100%; display: block; }
-
-        /* VU-METRU CERC */
-        #circle-group { 
-            position: absolute; width: 300px; height: 300px; z-index: 15; cursor: grab;
-            display: flex; align-items: center; justify-content: center;
-            transform: scale(calc(var(--pulse) * var(--cerc-scale))); 
-        }
-        #radial-canvas { position: absolute; pointer-events: none; }
-        #inner-circle { 
-            width: 160px; height: 160px; border-radius: 50%; 
-            border: 5px solid var(--main-color); overflow: hidden; z-index: 16; background: #000;
-        }
+        #circle-group { position: absolute; width: 300px; height: 300px; z-index: 15; transform: scale(calc(var(--pulse) * var(--cerc-scale))); }
+        #radial-canvas { position: absolute; top: -75px; left: -75px; pointer-events: none; }
+        #inner-circle { width: 160px; height: 160px; border-radius: 50%; border: 4px solid var(--main-color); overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; position: relative; z-index: 16; }
         #inner-img { width: 100%; height: 100%; object-fit: cover; display: none; }
 
-        /* BANDA MESAJE (TICKER) */
-        #branding-container {
-            position: absolute; bottom: 100px; left: 0; width: 100%;
-            height: 60px; background: rgba(0,0,0,0.6);
-            border-top: 2px solid var(--main-color);
-            border-bottom: 2px solid var(--main-color);
-            z-index: 20; overflow: hidden; display: flex; align-items: center;
-        }
-        #branding {
-            display: inline-block; white-space: nowrap; font-weight: 900;
-            text-transform: uppercase; font-size: 35px; color: white;
-            padding-left: 100%; animation: marquee 15s linear infinite;
-        }
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
-        }
+        #branding-container { position: absolute; bottom: 80px; left: 0; width: 100%; height: 50px; background: rgba(0,0,0,0.7); border-y: 1px solid var(--main-color); z-index: 20; overflow: hidden; display: flex; align-items: center; }
+        #branding { white-space: nowrap; font-weight: 900; font-size: 30px; padding-left: 100%; animation: marquee 15s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        /* PANOU UI */
-        .ui-container { 
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; 
-            background: #111; padding: 10px; z-index: 1000;
-            border-top: 3px solid var(--main-color);
-        }
-        .cube { background: #1a1a1a; padding: 8px; border-radius: 5px; font-size: 10px; border: 1px solid #333; }
-        h4 { color: var(--main-color); text-align: center; margin-bottom: 5px; border-bottom: 1px solid #333; }
-        button { background: #333; width: 100%; padding: 5px; margin-top: 3px; border-radius: 3px; font-weight: bold; }
-        .btn-on { background: #15803d !important; color: white; }
-        input[type="range"] { width: 100%; accent-color: var(--main-color); }
+        .ui-container { position: fixed; bottom: 0; left: 0; width: 100%; display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; background: #111; padding: 10px; z-index: 1000; border-top: 2px solid var(--main-color); font-size: 10px; }
+        .cube { background: #1a1a1a; padding: 5px; border: 1px solid #333; }
+        button { background: #333; width: 100%; padding: 4px; margin-top: 2px; cursor: pointer; }
+        .btn-active { background: var(--main-color) !important; color: white; }
     </style>
 </head>
 <body>
 
 <div id="viewport">
-    <video id="bg-video" autoplay loop muted></video>
+    <video id="bg-video" autoplay loop muted playsinline></video>
     <img id="bg-img">
     
-    <div id="webcam-layer" style="top:20px; right:20px; width:300px;">
+    <div id="webcam-layer">
         <canvas id="ai-canvas"></canvas>
     </div>
     
-    <div id="circle-group" style="top:20%; left:35%;">
+    <div id="circle-group" style="left: 35%; top: 25%;">
         <canvas id="radial-canvas" width="450" height="450"></canvas>
-        <div id="inner-circle">
-            <img id="inner-img" src="">
-        </div>
+        <div id="inner-circle"><img id="inner-img" src=""></div>
     </div>
 
-    <div id="branding-container">
-        <div id="branding">BINE AȚI VENIT LA MV STUDIO!</div>
-    </div>
+    <div id="branding-container"><div id="branding">BINE AȚI VENIT!</div></div>
 </div>
 
 <div class="ui-container" id="main-ui">
-    <div class="cube">
-        <h4>1. Video</h4>
-        <input type="file" accept="video/*" onchange="loadMedia(this, 'video')">
-        <button id="btn-video" onclick="toggleLayer('bg-video')">VIDEO OFF</button>
-    </div>
-    <div class="cube">
-        <h4>2. Foto</h4>
-        <input type="file" accept="image/*" onchange="loadMedia(this, 'photo')">
-        <button id="btn-photo" onclick="toggleLayer('bg-img')">FOTO OFF</button>
-    </div>
-    <div class="cube">
-        <h4>3. AI & Cam</h4>
-        <button onclick="initCam()" style="background:var(--main-color); color:black">START CAM</button>
-        <button id="btn-ai" onclick="isAI=!isAI">AI CUT OFF</button>
-        <input type="range" min="0.5" max="2" step="0.1" oninput="setCamScale(this.value)">
-    </div>
-    <div class="cube">
-        <h4>4. VU-Metru</h4>
-        <input type="file" accept="image/*" onchange="loadMedia(this, 'logo')">
-        <button id="btn-ic" onclick="toggleLogo()">LOGO OFF</button>
-        <input type="range" min="0.5" max="2" step="0.1" oninput="setCercScale(this.value)">
-    </div>
-    <div class="cube">
-        <h4>5. Text</h4>
-        <input type="text" placeholder="Mesaj..." oninput="updateText(this.value)">
-        <input type="color" oninput="updateColor(this.value)">
-    </div>
-    <div class="cube">
-        <h4>6. Sistem</h4>
-        <button onclick="document.documentElement.requestFullscreen()" style="background: #1d4ed8">FULLSCREEN</button>
-        <button onclick="this.parentElement.parentElement.style.display='none'" style="background: #991b1b">ASCUNDE</button>
-    </div>
+    <div class="cube"><h4>VIDEO</h4><input type="file" onchange="loadF(this, 'v')"><button onclick="tgL('bg-video')">ON/OFF</button></div>
+    <div class="cube"><h4>FOTO</h4><input type="file" onchange="loadF(this, 'i')"><button onclick="tgL('bg-img')">ON/OFF</button></div>
+    <div class="cube"><h4>AI CAM</h4><button onclick="startC()">START CAM</button><button id="ai-btn" onclick="isAI=!isAI">AI OFF</button></div>
+    <div class="cube"><h4>VU/LOGO</h4><input type="file" onchange="loadF(this, 'l')"><button onclick="tgLogo()">LOGO OFF</button></div>
+    <div class="cube"><h4>TEXT</h4><input type="text" oninput="upTxt(this.value)"><input type="color" oninput="upCol(this.value)"></div>
+    <div class="cube"><h4>SYS</h4><button onclick="tgUI()">ASCUNDE (H)</button><button onclick="resetApp()">RESET</button></div>
 </div>
 
-<video id="hidden-video" style="display:none" autoplay muted playsinline></video>
+<video id="h-vid" style="display:none" autoplay muted playsinline></video>
 
 <script>
-    // Configurare Firebase
-    firebase.initializeApp({ databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" });
-    const remoteDb = firebase.database().ref('remote_control_cioko');
+    const config = { databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(config);
+    const db = firebase.database().ref('remote_control_cioko');
 
-    let isAI = false, webcamStream = null, audioCtx, analyzer, dataArray;
-    let isLogo = false, cercScale = 1, camScale = 1;
+    let isAI = false, isLogo = false, audioCtx, analyzer, dataArray;
+    let slideFiles = [], slideIdx = 0, slideInt = null;
 
-    // --- ASCULTĂTOR FIREBASE (MESAJE + COMENZI) ---
-    remoteDb.on('value', (sn) => {
-        const d = sn.val();
-        if(!d) return;
-
-        // 1. Logica Mesaje (Invitați .text sau Telecomandă .val)
-        const msg = d.text || d.val;
-        if(msg && (d.text || d.cmd === 'SET_TEXT')) {
-            const el = document.getElementById('branding');
-            el.innerText = msg;
-            el.style.animation = 'none';
-            el.offsetHeight; 
-            el.style.animation = 'marquee 15s linear infinite';
-        }
-
-        // 2. Logica Comenzi (Timp sub 10 secunde)
-        if(d.time && Date.now() - d.time < 10000) {
-            switch(d.cmd) {
-                case 'TOGGLE_VIDEO': toggleLayer('bg-video'); break;
-                case 'TOGGLE_PHOTO': toggleLayer('bg-img'); break;
-                case 'START_AI': initCam(); break;
-                case 'TOGGLE_SETUP_UI': 
-                    const ui = document.getElementById('main-ui');
-                    ui.style.display = (ui.style.display==='none'?'grid':'none'); 
-                    break;
-                case 'SET_BRANDING_SIZE': 
-                    document.getElementById('branding').style.fontSize = d.val + 'px';
-                    break;
-            }
+    // --- FIREBASE SYNC ---
+    db.on('value', sn => {
+        const d = sn.val(); if(!d) return;
+        if(d.text || d.val) { upTxt(d.text || d.val); }
+        if(d.time && Date.now() - d.time < 5000) {
+            if(d.cmd === 'TOGGLE_VIDEO') tgL('bg-video');
+            if(d.cmd === 'TOGGLE_PHOTO') tgL('bg-img');
+            if(d.cmd === 'TOGGLE_SETUP_UI') tgUI();
         }
     });
 
-    // --- FUNCTII MEDIA ---
-    function loadMedia(input, type) {
+    // --- MEDIA ---
+    function loadF(input, type) {
         const url = URL.createObjectURL(input.files[0]);
-        if(type==='video') document.getElementById('bg-video').src = url;
-        if(type==='photo') document.getElementById('bg-img').src = url;
-        if(type==='logo') { document.getElementById('inner-img').src = url; }
+        if(type === 'v') { document.getElementById('bg-video').src = url; tgL('bg-video'); }
+        if(type === 'i') { document.getElementById('bg-img').src = url; tgL('bg-img'); }
+        if(type === 'l') { document.getElementById('inner-img').src = url; tgLogo(); }
     }
 
-    function toggleLayer(id) {
-        const el = document.getElementById(id);
-        const isVisible = el.style.display === 'block';
-        document.getElementById('bg-video').style.display = 'none';
-        document.getElementById('bg-img').style.display = 'none';
-        el.style.display = isVisible ? 'none' : 'block';
+    function tgL(id) {
+        const v = document.getElementById('bg-video'), i = document.getElementById('bg-img');
+        if(id === 'bg-video') { v.style.display = 'block'; i.style.display = 'none'; }
+        else { i.style.display = 'block'; v.style.display = 'none'; }
     }
 
-    function toggleLogo() {
-        isLogo = !isLogo;
-        document.getElementById('inner-img').style.display = isLogo ? 'block' : 'none';
+    function tgLogo() { isLogo = !isLogo; document.getElementById('inner-img').style.display = isLogo ? 'block' : 'none'; }
+
+    // --- CAMERA & AI (OPTIMIZAT) ---
+    async function startC() {
+        try {
+            const s = await navigator.mediaDevices.getUserMedia({video: {width: 640, height: 480}, audio: true});
+            const hV = document.getElementById('h-vid');
+            hV.srcObject = s;
+            setupA(s);
+
+            const sel = new SelfieSegmentation({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`});
+            sel.setOptions({modelSelection: 1, selfiemode: false});
+            sel.onResults(res => {
+                const cv = document.getElementById('ai-canvas'), ctx = cv.getContext('2d');
+                cv.width = res.image.width; cv.height = res.image.height;
+                ctx.save(); ctx.clearRect(0,0,cv.width,cv.height);
+                if(isAI) {
+                    ctx.drawImage(res.segmentationMask, 0, 0, cv.width, cv.height);
+                    ctx.globalCompositeOperation = 'source-in';
+                }
+                ctx.drawImage(res.image, 0, 0, cv.width, cv.height);
+                ctx.restore();
+            });
+
+            async function frame() { await sel.send({image: hV}); requestAnimationFrame(frame); }
+            frame();
+        } catch(e) { alert("Eroare Camera/WebGL: " + e.message); }
     }
 
-    // --- AUDIO & VU-METRU ---
-    function setupAudio(stream) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioCtx.createMediaStreamSource(stream);
-        analyzer = audioCtx.createAnalyser();
-        analyzer.fftSize = 256;
+    // --- AUDIO ---
+    function setupA(s) {
+        audioCtx = new AudioContext();
+        const src = audioCtx.createMediaStreamSource(s);
+        analyzer = audioCtx.createAnalyser(); analyzer.fftSize = 128;
         dataArray = new Uint8Array(analyzer.frequencyBinCount);
-        source.connect(analyzer);
-        drawVu();
+        src.connect(analyzer);
+        draw();
     }
 
-    function drawVu() {
-        requestAnimationFrame(drawVu);
+    function draw() {
+        requestAnimationFrame(draw);
         analyzer.getByteFrequencyData(dataArray);
-        const canvas = document.getElementById('radial-canvas'), ctx = canvas.getContext('2d');
+        const cv = document.getElementById('radial-canvas'), ctx = cv.getContext('2d');
         ctx.clearRect(0,0,450,450);
         let sum = 0;
-        for(let i=0; i<60; i++) {
-            const barHeight = dataArray[i] * 0.5;
-            sum += barHeight;
-            const angle = (i * 6) * Math.PI / 180;
-            ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--main-color');
-            ctx.lineWidth = 4;
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--main-color');
+        ctx.lineWidth = 3;
+        for(let i=0; i<40; i++) {
+            const h = dataArray[i] * 0.4; sum += h;
+            const a = (i * 9) * Math.PI / 180;
             ctx.beginPath();
-            ctx.moveTo(225 + Math.cos(angle)*90, 225 + Math.sin(angle)*90);
-            ctx.lineTo(225 + Math.cos(angle)*(90+barHeight), 225 + Math.sin(angle)*(90+barHeight));
+            ctx.moveTo(225 + Math.cos(a)*85, 225 + Math.sin(a)*85);
+            ctx.lineTo(225 + Math.cos(a)*(85+h), 225 + Math.sin(a)*(85+h));
             ctx.stroke();
         }
-        let pulse = 1 + (sum/6000);
-        document.documentElement.style.setProperty('--pulse', pulse);
-    }
-
-    // --- AI & CAMERA ---
-    async function initCam() {
-        const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-        document.getElementById('hidden-video').srcObject = stream;
-        setupAudio(stream);
-        const segmenter = new SelfieSegmentation({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`});
-        segmenter.setOptions({modelSelection: 1});
-        segmenter.onResults(onResults);
-        async function sendFrame() {
-            await segmenter.send({image: document.getElementById('hidden-video')});
-            requestAnimationFrame(sendFrame);
-        }
-        sendFrame();
-    }
-
-    function onResults(res) {
-        const canvas = document.getElementById('ai-canvas'), ctx = canvas.getContext('2d');
-        canvas.width = res.image.width; canvas.height = res.image.height;
-        ctx.save();
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        if(isAI) {
-            ctx.drawImage(res.segmentationMask, 0, 0, canvas.width, canvas.height);
-            ctx.globalCompositeOperation = 'source-in';
-        }
-        ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
-        ctx.restore();
+        document.documentElement.style.setProperty('--pulse', 1 + (sum/4000));
     }
 
     // --- UTILS ---
-    function updateText(v) { document.getElementById('branding').innerText = v; }
-    function updateColor(v) { document.documentElement.style.setProperty('--main-color', v); }
-    function setCamScale(v) { document.documentElement.style.setProperty('--cam-scale', v); }
-    function setCercScale(v) { document.documentElement.style.setProperty('--cerc-scale', v); }
-
-    // DRAG AND DROP
-    function makeDraggable(el) {
-        let px = 0, py = 0;
-        el.onmousedown = (e) => {
-            px = e.clientX; py = e.clientY;
-            document.onmousemove = (e) => {
-                el.style.left = (el.offsetLeft - (px - e.clientX)) + "px";
-                el.style.top = (el.offsetTop - (py - e.clientY)) + "px";
-                px = e.clientX; py = e.clientY;
-            };
-            document.onmouseup = () => { document.onmousemove = null; };
-        };
+    function upTxt(v) { 
+        const b = document.getElementById('branding'); b.innerText = v;
+        b.style.animation = 'none'; b.offsetHeight; b.style.animation = 'marquee 15s linear infinite';
     }
-    makeDraggable(document.getElementById('webcam-layer'));
-    makeDraggable(document.getElementById('circle-group'));
+    function upCol(v) { document.documentElement.style.setProperty('--main-color', v); }
+    function tgUI() { const u = document.getElementById('main-ui'); u.style.display = u.style.display==='none'?'grid':'none'; }
+    
+    // TASTA H PENTRU CONTROL
+    document.addEventListener('keydown', e => { if(e.key.toLowerCase()==='h') tgUI(); });
+    
+    function resetApp() { localStorage.clear(); location.reload(); }
 </script>
 </body>
 </html>
