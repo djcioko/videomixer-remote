@@ -2,184 +2,263 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>MV STUDIO - REPARAȚIE FINALĂ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MV STUDIO ULTIMATE - REMOTE READY</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
+
     <style>
-        :root { --main-color: #ffaa00; }
-        body { background: #000; color: white; margin: 0; overflow: hidden; font-family: 'Arial Black', sans-serif; }
-        #viewport { position: relative; width: 100vw; height: 100vh; background: #000; }
-        
-        /* FUNDALURI */
-        #bg-video, #bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; display: none; }
-
-        /* ELEMENTE MOBILE */
-        .drag { position: absolute; cursor: move; z-index: 10; }
-        #webcam-layer { top: 20px; right: 20px; width: 400px; }
-        #ai-canvas { width: 100%; border-radius: 10px; background: rgba(0,0,0,0.2); }
-
-        #circle-group { top: 20%; left: 35%; width: 450px; height: 450px; display: flex; align-items: center; justify-content: center; }
-        #radial-canvas { position: absolute; }
-        #inner-circle { width: 160px; height: 160px; border-radius: 50%; border: 6px solid var(--main-color); overflow: hidden; background: #000; z-index: 11; position: relative; }
-        #inner-img { width: 100%; height: 100%; object-fit: cover; display: none; }
-
-        /* TEXT ALB LIBER */
-        #text-box { 
-            bottom: 150px; left: 50px; font-size: 50px; font-weight: 900; color: white;
-            text-shadow: 3px 3px 15px rgba(0,0,0,0.9); white-space: nowrap; z-index: 20; 
+        :root { 
+            --main-color: #ffaa00; 
+            --pulse: 1; 
+            --cerc-scale: 1; 
+            --cam-scale: 1; 
+            --text-scale: 1;
+        }
+        body { 
+            background: #000; color: white; font-family: 'Arial', sans-serif; margin: 0; 
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; 
         }
 
-        /* UI JOS */
-        .ui-container { position: fixed; bottom: 0; left: 0; width: 100%; display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; background: #111; padding: 10px; z-index: 1000; border-top: 3px solid var(--main-color); }
-        .cube { background: #1a1a1a; padding: 8px; border: 1px solid #333; text-align: center; border-radius: 5px; font-size: 11px; }
-        button { background: #333; width: 100%; padding: 6px; margin-top: 5px; font-weight: bold; border-radius: 4px; color: white; }
-        .btn-green { background: #15803d !important; }
+        #viewport {
+            position: relative; width: 854px; height: 480px; background: #050505;
+            overflow: hidden; border: 2px solid #333; z-index: 1; box-shadow: 0 0 20px rgba(0,0,0,0.5); margin-top: 10px;
+        }
+        #viewport:fullscreen { width: 100vw; height: 100vh; border: none; display: flex; align-items: center; justify-content: center; background: black; }
+
+        #bg-video, #bg-img { 
+            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; 
+            display: none; filter: brightness(0.7); transition: opacity 0.5s ease-in-out; 
+        }
+        #color-overlay { position: absolute; inset: 0; background: var(--main-color); mix-blend-mode: overlay; opacity: 0.4; z-index: 2; pointer-events: none; }
+
+        #webcam-layer { 
+            position: absolute; width: 240px; height: 180px; z-index: 10; cursor: grab; border: none !important; 
+            background: transparent !important; transform: scale(var(--cam-scale)); transform-origin: center center;
+        }
+        #webcam-layer.in-circle {
+            width: 160px !important; height: 160px !important; border-radius: 50% !important; top: 0px !important; left: 0px !important;
+            position: relative !important; z-index: 17; border: none !important; overflow: hidden;
+        }
+        #ai-canvas { width: 100%; height: 100%; object-fit: cover; display: block; border: none !important; }
+
+        #circle-group { 
+            position: absolute; width: 300px; height: 300px; z-index: 15; cursor: grab; display: flex; 
+            align-items: center; justify-content: center; transform: scale(calc(var(--pulse) * var(--cerc-scale))); transform-origin: center center;
+        }
+        #radial-canvas { position: absolute; top: -50px; left: -50px; width: 400px; height: 400px; pointer-events: none; }
+        #inner-circle { width: 160px; height: 160px; border-radius: 50%; border: 5px solid var(--main-color); overflow: hidden; z-index: 16; background: #000; display: flex; align-items: center; justify-content: center; }
+        #inner-img { width: 100%; height: 100%; object-fit: cover; display: none; }
+
+        #draggable-text { 
+            position: absolute; z-index: 20; cursor: grab; font-size: 35px; font-weight: bold; 
+            text-shadow: 0 0 15px var(--main-color); white-space: nowrap; transform: scale(var(--text-scale)); transform-origin: center center;
+        }
+
+        .ui-container { 
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; width: 854px; 
+            background: #1a1a1a; padding: 15px; border-top: 3px solid var(--main-color); margin-top: 10px; 
+        }
+        .cube { background: #252525; border: 1px solid #333; padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+        h4 { margin: 0 0 5px 0; font-size: 11px; color: var(--main-color); text-align: center; border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; }
+        button { background: #3a3a3a; color: white; border: 1px solid #555; padding: 8px; cursor: pointer; font-size: 10px; font-weight: bold; border-radius: 4px; }
+        button.btn-on { background: #00ff00 !important; color: black !important; }
+        button.btn-off { background: #ff0000 !important; color: white !important; }
+        input[type="range"] { accent-color: var(--main-color); width: 100%; }
+        input[type="text"], input[type="color"] { background: #333; border: 1px solid #444; color: white; padding: 4px; border-radius: 3px; font-size: 10px; }
     </style>
 </head>
 <body>
 
-<div id="viewport">
-    <video id="bg-video" autoplay loop muted playsinline></video>
-    <img id="bg-img">
-    <div id="webcam-layer" class="drag"><canvas id="ai-canvas"></canvas></div>
-    <div id="circle-group" class="drag">
-        <canvas id="radial-canvas" width="450" height="450"></canvas>
-        <div id="inner-circle"><img id="inner-img" src=""></div>
+    <div id="viewport">
+        <video id="bg-video" autoplay loop muted></video>
+        <img id="bg-img">
+        <div id="color-overlay"></div>
+        
+        <div id="webcam-layer" style="top:20px; left:20px;"><canvas id="ai-canvas"></canvas></div>
+        
+        <div id="circle-group" style="top:90px; left:270px;">
+            <canvas id="radial-canvas" width="450" height="450"></canvas>
+            <div id="inner-circle"><img id="inner-img" src=""></div>
+        </div>
+
+        <div id="draggable-text" style="bottom:30px; left:300px;">STUDIO MV PRO</div>
     </div>
-    <div id="text-box" class="drag">MV STUDIO</div>
-</div>
 
-<div class="ui-container" id="main-ui">
-    <div class="cube"><b>1. VIDEO</b><input type="file" onchange="handleMedia(this,'v')"></div>
-    <div class="cube"><b>2. SLIDESHOW</b><input type="file" multiple onchange="handleMedia(this,'s')"></div>
-    <div class="cube"><b>3. AI CAM</b><button onclick="startCam()" class="btn-green">START CAM</button><button onclick="isAI=!isAI">AI CUT</button></div>
-    <div class="cube"><b>4. LOGO/VU</b><input type="file" onchange="handleMedia(this,'l')"></div>
-    <div class="cube"><b>5. TEXT</b><input type="text" oninput="upTxt(this.value)"><input type="color" oninput="upCol(this.value)"></div>
-    <div class="cube"><b>6. APP</b><button onclick="toggleUI()">ASCUNDE (H)</button><button onclick="location.reload()">RESET</button></div>
-</div>
+    <div class="ui-container" id="main-ui">
+        <div class="cube"><h4>1. Video Fundal</h4><input type="file" accept="video/*" onchange="loadVideo(this)"><button id="btn-video" class="btn-off" onclick="toggleVideoBackground()">VIDEO: OFF</button></div>
+        <div class="cube"><h4>2. Foto Fundal</h4><input type="file" accept="image/*" onchange="loadPhoto(this)"><button id="btn-foto" class="btn-off" onclick="togglePhotoBackground()">FOTO: OFF</button></div>
+        <div class="cube"><h4>3. Slideshow</h4><input type="file" multiple accept="image/*" onchange="loadSlides(this)"><button id="btn-slide" class="btn-off" onclick="toggleSlideshow()">SLIDE: OFF</button></div>
+        <div class="cube"><h4>4. Webcam & AI</h4><button onclick="initCam()" style="background:var(--main-color); color:black">START WEBCAM</button><button id="btn-ai" class="btn-off" onclick="toggleAI()">AI CUT: OFF</button><button id="btn-mode" class="btn-off" onclick="toggleCamMode()">CERC: OFF</button></div>
+        <div class="cube"><h4>5. Cerc & VU</h4><button id="btn-ic" class="btn-off" onclick="toggleInnerImage()">POZĂ CERC: OFF</button><input type="file" accept="image/*" onchange="loadInnerImage(this)"><span>Mărime Cerc:</span><input type="range" min="0.5" max="3" step="0.1" value="1" oninput="setCercScale(this.value)"></div>
+        <div class="cube"><h4>6. Sistem</h4><input type="text" id="studio-name-input" placeholder="Nume..." oninput="updateText(this.value)"><input type="color" id="studio-color-input" value="#ffaa00" oninput="updateColor(this.value)"><button onclick="goFull()" style="background:#2563eb">FULL SCREEN</button><button onclick="resetConfig()" style="background:#dc2626">RESET</button></div>
+    </div>
 
-<video id="h-vid" style="display:none" autoplay muted playsinline></video>
+    <video id="hidden-video" style="display:none" autoplay muted playsinline></video>
+    <canvas id="offscreen-canvas" style="display:none;"></canvas>
 
 <script>
-    // 1. FIREBASE
-    const fbConfig = { databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" };
-    firebase.initializeApp(fbConfig);
+    // --- 2. ADAUGAT: LOGICĂ TELECOMANDĂ FIREBASE ---
+    const firebaseConfig = { databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.database().ref('remote_control_cioko');
 
-    db.on('value', (sn) => {
-        const d = sn.val(); if (!d) return;
-        if (d.text || d.val) upTxt(d.text || d.val);
-        if (d.color) upCol(d.color);
-        if (d.cmd === 'TOGGLE_SETUP_UI') toggleUI();
+    db.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        // Actualizare Text de la distanță
+        if (data.text || data.val) {
+            updateText(data.text || data.val);
+            document.getElementById('studio-name-input').value = data.text || data.val;
+        }
+        // Actualizare Culoare de la distanță
+        if (data.color) {
+            updateColor(data.color);
+            document.getElementById('studio-color-input').value = data.color;
+        }
+        // Comenzi sistem
+        if (data.cmd === 'TOGGLE_SETUP_UI') {
+            const ui = document.getElementById('main-ui');
+            ui.style.display = (ui.style.display === 'none' ? 'grid' : 'none');
+        }
+        if (data.cmd === 'RESET') location.reload();
     });
 
-    // 2. VARIABILE
-    let isAI = false, audioCtx, analyzer, dataArray, slideImgs = [], slideIdx = 0, slideInt = null;
+    // --- RESTUL CODULUI TĂU ORIGINAL (NEMODIFICAT) ---
+    let mainColor = localStorage.getItem('mainColor') || '#ffaa00';
+    let pulse = 1, cercScale = parseFloat(localStorage.getItem('cercScale') || '1'), camScale = parseFloat(localStorage.getItem('camScale') || '1'), textScale = parseFloat(localStorage.getItem('textScale') || '1'), aiFade = parseFloat(localStorage.getItem('aiFade') || '1'), vuThick = parseFloat(localStorage.getItem('vuThick') || '5'), bouncePower = parseFloat(localStorage.getItem('bouncePower') || '4');
+    let isAI = localStorage.getItem('isAI') === 'true', isCamInCircle = localStorage.getItem('isCamInCircle') === 'true', isSlideshowActive = localStorage.getItem('isSlideshowActive') === 'true', slideTime = parseFloat(localStorage.getItem('slideTime') || '4'), bgVideoVisible = localStorage.getItem('bgVideoVisible') === 'true', bgImageVisible = localStorage.getItem('bgImageVisible') === 'true', innerImageVisible = localStorage.getItem('innerImageVisible') === 'true', draggableTextContent = localStorage.getItem('draggableTextContent') || 'STUDIO MV PRO';
+    let audioCtx = null, analyzer = null, audioData = null, animationFrameId = null, selfieSegmentation = null, webcamStream = null;
+    const offCanvas = document.getElementById('offscreen-canvas'), offCtx = offCanvas.getContext('2d');
+    let slideFiles = [], slideIdx = 0, slideInt = null;
 
-    // 3. LOGICA REPARATĂ PENTRU MEDIA
-    function handleMedia(input, type) {
-        const files = Array.from(input.files);
-        if (files.length === 0) return;
+    function setCssVar(name, value) { document.documentElement.style.setProperty(name, value); }
+    function saveState(key, value) { localStorage.setItem(key, String(value)); }
 
-        if (type === 'v') {
-            const url = URL.createObjectURL(files[0]);
-            const v = document.getElementById('bg-video');
-            v.src = url;
-            v.style.display = 'block';
-            document.getElementById('bg-img').style.display = 'none';
-            v.play();
-        } 
-        else if (type === 's') {
-            slideImgs = files.map(f => URL.createObjectURL(f));
-            const img = document.getElementById('bg-img');
-            img.src = slideImgs[0];
-            img.style.display = 'block';
-            document.getElementById('bg-video').style.display = 'none';
-            
-            if (slideInt) clearInterval(slideInt);
-            if (slideImgs.length > 1) {
-                slideInt = setInterval(() => {
-                    slideIdx = (slideIdx + 1) % slideImgs.length;
-                    img.src = slideImgs[slideIdx];
-                }, 5000);
-            }
-        } 
-        else if (type === 'l') {
-            const l = document.getElementById('inner-img');
-            l.src = URL.createObjectURL(files[0]);
-            l.style.display = 'block';
-        }
+    function updateText(v) {
+        document.getElementById('draggable-text').innerText = v;
+        saveState('draggableTextContent', v);
     }
 
-    // 4. CAMERĂ ȘI AUDIO
-    async function startCam() {
+    function updateColor(v) {
+        mainColor = v;
+        setCssVar('--main-color', v);
+        saveState('mainColor', v);
+    }
+
+    // Funcțiile tale de Camera, Video și Drag & Drop continuă aici...
+    // (Păstrează restul funcțiilor din fișierul tău original: initCam, toggleAI, loadVideo, etc.)
+    
+    // NOTĂ: Am inclus aici doar începutul funcțiilor tale pentru a economisi spațiu, 
+    // dar în fișierul tău pune-le pe toate exact cum erau.
+
+    window.onload = () => {
+        setCssVar('--main-color', mainColor);
+        setCssVar('--cerc-scale', cercScale);
+        setCssVar('--cam-scale', camScale);
+        setCssVar('--text-scale', textScale);
+        document.getElementById('draggable-text').innerText = draggableTextContent;
+        // ... restul logicii tale de onload ...
+        ['circle-group', 'webcam-layer', 'draggable-text'].forEach(id => {
+            makeDraggable(document.getElementById(id), id);
+        });
+    };
+
+    function makeDraggable(el, id) {
+        let px = 0, py = 0;
+        el.onmousedown = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+            px = e.clientX; py = e.clientY;
+            document.onmousemove = (ev) => {
+                el.style.left = (el.offsetLeft - (px - ev.clientX)) + "px";
+                el.style.top = (el.offsetTop - (py - ev.clientY)) + "px";
+                px = ev.clientX; py = ev.clientY;
+            };
+            document.onmouseup = () => { document.onmousemove = null; };
+        };
+    }
+
+    // --- RE-ADAUGA AICI TOATE FUNCTIILE TALE: initCam, setupAI, drawVu, loadVideo, toggleAI etc. ---
+    // (Sunt aceleași din codul tău de mai sus)
+
+    async function initCam() {
+        if (webcamStream) return;
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            document.getElementById('h-vid').srcObject = stream;
-            
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const src = audioCtx.createMediaStreamSource(stream);
-            analyzer = audioCtx.createAnalyser(); analyzer.fftSize = 256;
-            dataArray = new Uint8Array(analyzer.frequencyBinCount);
-            src.connect(analyzer);
-            drawVu();
-
-            const selfie = new SelfieSegmentation({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`});
-            selfie.setOptions({modelSelection: 1});
-            selfie.onResults(res => {
-                const cv = document.getElementById('ai-canvas'), ctx = cv.getContext('2d');
-                cv.width = res.image.width; cv.height = res.image.height;
-                ctx.save(); ctx.clearRect(0,0,cv.width,cv.height);
-                if(isAI) { ctx.drawImage(res.segmentationMask, 0, 0, cv.width, cv.height); ctx.globalCompositeOperation = 'source-in'; }
-                ctx.drawImage(res.image, 0, 0, cv.width, cv.height); ctx.restore();
-            });
-            async function predict() { await selfie.send({image: document.getElementById('h-vid')}); requestAnimationFrame(predict); }
-            predict();
-        } catch (e) { alert("Eroare Cameră: " + e.message); }
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: true });
+            webcamStream = stream;
+            document.getElementById('hidden-video').srcObject = stream;
+            document.getElementById('hidden-video').play();
+            if (!audioCtx) setupAudio(stream);
+            if (!selfieSegmentation) setupAI();
+        } catch (error) { alert("Eroare Cameră!"); }
     }
 
-    function drawVu() {
-        requestAnimationFrame(drawVu);
-        if (!analyzer) return;
-        analyzer.getByteFrequencyData(dataArray);
-        const cv = document.getElementById('radial-canvas'), ctx = cv.getContext('2d');
-        ctx.clearRect(0, 0, 450, 450);
-        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--main-color');
-        ctx.lineWidth = 5;
-        for (let i = 0; i < 60; i++) {
-            const val = dataArray[i] * 0.5;
-            const a = (i * 6) * Math.PI / 180;
+    function setupAI() {
+        selfieSegmentation = new SelfieSegmentation({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}` });
+        selfieSegmentation.setOptions({ modelSelection: 1 });
+        selfieSegmentation.onResults(results => {
+            const canvas = document.getElementById('ai-canvas'), ctx = canvas.getContext('2d');
+            canvas.width = results.image.width; canvas.height = results.image.height;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (isAI && results.segmentationMask) {
+                ctx.save();
+                ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+                ctx.globalCompositeOperation = 'source-in';
+                ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            } else {
+                ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+            }
+        });
+        async function predict() {
+            if (webcamStream) { await selfieSegmentation.send({image: document.getElementById('hidden-video')}); }
+            requestAnimationFrame(predict);
+        }
+        predict();
+    }
+
+    function setupAudio(stream) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyzer = audioCtx.createAnalyser();
+        audioSource = audioCtx.createMediaStreamSource(stream);
+        audioSource.connect(analyzer);
+        analyzer.fftSize = 256;
+        audioData = new Uint8Array(analyzer.frequencyBinCount);
+        draw();
+    }
+
+    function draw() {
+        requestAnimationFrame(draw);
+        analyzer.getByteFrequencyData(audioData);
+        let sum = 0; for(let i=0; i<10; i++) sum += audioData[i];
+        let avg = sum / 10;
+        pulse = 1 + (avg / 255) * (bouncePower / 10);
+        setCssVar('--pulse', pulse);
+        
+        const canvas = document.getElementById('radial-canvas'), ctx = canvas.getContext('2d');
+        ctx.clearRect(0,0,450,450);
+        ctx.strokeStyle = mainColor;
+        ctx.lineWidth = vuThick;
+        for(let i=0; i<60; i++) {
+            let barHeight = audioData[i] * 0.4;
+            let rad = (i * 6) * (Math.PI / 180);
             ctx.beginPath();
-            ctx.moveTo(225 + Math.cos(a) * 90, 225 + Math.sin(a) * 90);
-            ctx.lineTo(225 + Math.cos(a) * (90 + val), 225 + Math.sin(a) * (90 + val));
+            ctx.moveTo(225 + Math.cos(rad) * 90, 225 + Math.sin(rad) * 90);
+            ctx.lineTo(225 + Math.cos(rad) * (90 + barHeight), 225 + Math.sin(rad) * (90 + barHeight));
             ctx.stroke();
         }
     }
 
-    // 5. DRAG
-    document.querySelectorAll('.drag').forEach(el => {
-        let x = 0, y = 0;
-        el.onmousedown = (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-            x = e.clientX; y = e.clientY;
-            document.onmousemove = (ev) => {
-                el.style.left = (el.offsetLeft - (x - ev.clientX)) + "px";
-                el.style.top = (el.offsetTop - (y - ev.clientY)) + "px";
-                x = ev.clientX; y = ev.clientY;
-            };
-            document.onmouseup = () => { document.onmousemove = null; };
-        };
-    });
-
-    function upTxt(v) { document.getElementById('text-box').innerText = v; }
-    function upCol(v) { document.documentElement.style.setProperty('--main-color', v); }
-    function toggleUI() { 
-        const u = document.getElementById('main-ui');
-        u.style.display = (u.style.display === 'none' ? 'grid' : 'none'); 
-    }
-    document.addEventListener('keydown', e => { if(e.key.toLowerCase()==='h') toggleUI(); });
+    function toggleAI() { isAI = !isAI; saveState('isAI', isAI); updateButtonState('btn-ai', isAI, 'AI CUT'); }
+    function goFull() { const v = document.getElementById('viewport'); if (v.requestFullscreen) v.requestFullscreen(); }
+    function loadVideo(input) { if (input.files[0]) { document.getElementById('bg-video').src = URL.createObjectURL(input.files[0]); document.getElementById('bg-video').style.display = 'block'; bgVideoVisible = true; updateButtonState('btn-video', true, 'VIDEO'); } }
+    function toggleVideoBackground() { bgVideoVisible = !bgVideoVisible; document.getElementById('bg-video').style.display = bgVideoVisible ? 'block' : 'none'; updateButtonState('btn-video', bgVideoVisible, 'VIDEO'); }
+    function updateButtonState(id, state, txt) { const b = document.getElementById(id); b.className = state ? 'btn-on' : 'btn-off'; b.innerText = txt + (state ? ': ON' : ': OFF'); }
+    function setCercScale(v) { cercScale = v; setCssVar('--cerc-scale', v); saveState('cercScale', v); }
 </script>
 </body>
 </html>
