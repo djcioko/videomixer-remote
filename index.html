@@ -2,44 +2,40 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>MV STUDIO PRO - REMOTE AI</title>
+    <title>MV STUDIO PRO - REMOTE FIX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation"></script>
     <style>
-        :root { --main: #ffaa00; --msg-size: 26px; }
+        :root { --main: #ffaa00; }
         body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; background: #000; overflow: hidden; color: white; font-family: sans-serif; }
-        #viewport { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; }
+        #viewport { position: relative; width: 100%; height: 100%; background: #000; }
         
-        /* Straturi Media */
         #bg-v, #bg-i, #bg-s { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; z-index: 1; }
 
         /* Camera AI */
-        #cam-box { position: absolute; z-index: 10; cursor: move; display: none; top: 20px; right: 20px; line-height: 0; }
-        #ai-canvas { width: 450px; border: 1px solid rgba(255,255,255,0.2); }
+        #cam-box { position: absolute; z-index: 10; cursor: move; display: none; top: 20px; right: 20px; }
+        #ai-canvas { width: 450px; border: 1px solid rgba(255,255,255,0.2); background: transparent; }
         #v-hidden { display: none; }
 
-        /* Vumetrul Alb */
+        /* Vumetru */
         #circle-box { position: absolute; z-index: 15; cursor: move; width: 300px; height: 300px; display: flex; align-items: center; justify-content: center; top: 10%; left: 30%; }
         #radial-canvas { position: absolute; z-index: 16; pointer-events: none; }
         #inner-circle { width: 120px; height: 120px; border-radius: 50%; border: 3px solid #fff; background: #000; overflow: hidden; z-index: 17; display: flex; align-items: center; justify-content: center; }
         #inner-img { width: 100%; height: 100%; object-fit: cover; display: none; }
 
-        /* Branding Text */
-        #branding { position: absolute; z-index: 20; cursor: move; font-weight: 900; text-transform: uppercase; text-shadow: 2px 2px 10px #000; bottom: 80px; left: 40px; font-size: 40px; color: white; }
+        #branding { position: absolute; z-index: 20; cursor: move; font-weight: 900; text-transform: uppercase; text-shadow: 2px 2px 10px #000; bottom: 80px; left: 40px; font-size: 40px; }
 
-        /* Panou Configurare VIZIBIL */
+        /* Panou Configurare */
         #setup-ui { 
             position: fixed; bottom: 0; left: 0; width: 100%; 
             background: #111; padding: 15px; z-index: 1000; 
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; 
-            border-top: 3px solid var(--main); box-shadow: 0 -5px 20px rgba(0,0,0,0.5); 
+            border-top: 3px solid var(--main);
         }
-        .p-box { background: #1a1a1a; padding: 10px; border-radius: 5px; font-size: 11px; border: 1px solid #333; }
-        .p-box b { display: block; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 3px; color: var(--main); }
-        input[type="file"] { font-size: 10px; color: #aaa; width: 100%; margin-top: 5px; }
-        .btn-hide { position: absolute; top: -30px; right: 20px; background: var(--main); color: black; padding: 5px 15px; font-weight: bold; border-radius: 5px 5px 0 0; cursor: pointer; border: none; }
+        .p-box { background: #1a1a1a; padding: 10px; border-radius: 5px; border: 1px solid #333; }
+        .btn-hide { position: absolute; top: -30px; right: 20px; background: var(--main); color: black; padding: 5px 15px; font-weight: bold; border-radius: 5px 5px 0 0; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -50,7 +46,7 @@
     <img id="bg-s">
 
     <div id="cam-box"><canvas id="ai-canvas"></canvas></div>
-    <video id="v-hidden" autoplay playsinline></video>
+    <video id="v-hidden" autoplay playsinline muted></video>
 
     <div id="circle-box">
         <canvas id="radial-canvas" width="400" height="400"></canvas>
@@ -61,69 +57,41 @@
 </div>
 
 <div id="setup-ui">
-    <button class="btn-hide" onclick="this.parentElement.style.display='none'">❌ ASCUNDE SETĂRILE</button>
-
-    <div class="p-box">
-        <b>📁 1. FUNDALURI</b>
-        <label>Video Fundal: </label><input type="file" onchange="saveMedia(this, 'vid')">
-        <label>Foto Fundal: </label><input type="file" onchange="saveMedia(this, 'img')">
-    </div>
-    <div class="p-box">
-        <b>📁 2. LOGO & SLIDE</b>
-        <label>Logo Vumetru: </label><input type="file" onchange="saveMedia(this, 'logo')">
-        <label>Folder Slide-uri: </label><input type="file" webkitdirectory directory multiple onchange="saveMedia(this, 'slide')">
-    </div>
-    <div class="p-box">
-        <b>⚙️ 3. STATUS</b>
-        <div id="status-txt" style="margin-bottom: 10px;">Aștept fișiere...</div>
-        <button onclick="goFS()" style="background:#1d4ed8; color:white; padding:8px; width:100%; border-radius:3px; font-weight:bold;">MOD FULLSCREEN</button>
-    </div>
-    <div class="p-box">
-        <b>🤖 4. ACTIVARE AI</b>
-        <button onclick="startAI()" style="background:#15803d; color:white; padding:10px; width:100%; border-radius:3px; font-weight:bold;">PORNEȘTE CAMERA (AI)</button>
-        <p style="font-size:9px; color:#888; margin-top:5px; text-align:center;">Apasă aici înainte de show!</p>
-    </div>
+    <button class="btn-hide" onclick="this.parentElement.style.display='none'">❌ ASCUNDE</button>
+    <div class="p-box"><b>FUNDALURI</b><input type="file" onchange="saveMedia(this, 'vid')"><br><input type="file" onchange="saveMedia(this, 'img')"></div>
+    <div class="p-box"><b>LOGO/SLIDE</b><input type="file" onchange="saveMedia(this, 'logo')"><br><input type="file" webkitdirectory directory multiple onchange="saveMedia(this, 'slide')"></div>
+    <div class="p-box"><b>STATUS</b><div id="status-txt">Inactiv</div><button onclick="goFS()" style="background:blue; width:100%">FS</button></div>
+    <div class="p-box"><b>AI</b><button onclick="startAI()" style="background:green; width:100%; padding:10px">PORNEȘTE CAMERA</button></div>
 </div>
 
 <script>
-    // Configurare Firebase
     firebase.initializeApp({ databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" });
     const remoteDb = firebase.database().ref('remote_control_cioko');
-    let sFiles=[], sIdx=0, sTim;
+    let sFiles=[], sIdx=0, sTim, isAIActive = false;
 
-    // --- SALVARE MEDIA (Respectă regula ta de memorie) ---
+    // --- SALVARE MEDIA (Păstrare în sesiune) ---
     function saveMedia(input, type) {
         const files = Array.from(input.files);
         if(!files.length) return;
-        
         const url = URL.createObjectURL(files[0]);
-        if(type === 'vid') { document.getElementById('bg-v').src = url; }
-        if(type === 'img') { document.getElementById('bg-i').src = url; }
-        if(type === 'logo') { 
-            const img = document.getElementById('inner-img');
-            img.src = url; 
-            img.style.display='block'; 
-        }
-        if(type === 'slide') { sFiles = files.map(f => URL.createObjectURL(f)); }
-        
-        document.getElementById('status-txt').innerText = "Fișiere salvate ✅";
+        if(type === 'vid') document.getElementById('bg-v').src = url;
+        if(type === 'img') document.getElementById('bg-i').src = url;
+        if(type === 'logo') { const img = document.getElementById('inner-img'); img.src = url; img.style.display='block'; }
+        if(type === 'slide') sFiles = files.map(f => URL.createObjectURL(f));
+        document.getElementById('status-txt').innerText = "Fișier încărcat ✅";
     }
 
-    // --- TELECOMANDA (Firebase) ---
+    // --- TELECOMANDA ---
     remoteDb.on('value', (sn) => {
         const d = sn.val();
         if(!d || Date.now() - d.time > 10000) return;
-
-        switch(d.cmd) {
-            case 'TOGGLE_VIDEO': showLayer('bg-v'); break;
-            case 'TOGGLE_PHOTO': showLayer('bg-i'); break;
-            case 'TOGGLE_SLIDE': showLayer('bg-s'); startS(); break;
-            case 'TOGGLE_CAM': tgC(); break;
-            case 'START_AI': startAI(); break;
-            case 'SET_TEXT': document.getElementById('branding').innerText = d.val; break;
-            case 'SET_BRANDING_SIZE': document.getElementById('branding').style.fontSize = d.val + 'px'; break;
-            case 'FULLSCREEN': goFS(); break;
-        }
+        if(d.cmd === 'TOGGLE_VIDEO') showLayer('bg-v');
+        if(d.cmd === 'TOGGLE_PHOTO') showLayer('bg-i');
+        if(d.cmd === 'TOGGLE_SLIDE') { showLayer('bg-s'); startS(); }
+        if(d.cmd === 'TOGGLE_CAM') tgC();
+        if(d.cmd === 'START_AI') startAI();
+        if(d.cmd === 'SET_TEXT') document.getElementById('branding').innerText = d.val;
+        if(d.cmd === 'SET_BRANDING_SIZE') document.getElementById('branding').style.fontSize = d.val + 'px';
     });
 
     function showLayer(id) {
@@ -133,14 +101,18 @@
         if(id === 'bg-v') el.play();
     }
 
-    // --- AI CAMERA (MediaPipe) ---
+    // --- CAMERA AI FIXATĂ PENTRU FLUIDITATE ---
     const selfieSegmentation = new SelfieSegmentation({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
     });
     selfieSegmentation.setOptions({ modelSelection: 1 });
+    
     selfieSegmentation.onResults(results => {
-        const can = document.getElementById('ai-canvas'), ctx = can.getContext('2d');
-        can.width = results.image.width; can.height = results.image.height;
+        const can = document.getElementById('ai-canvas');
+        const ctx = can.getContext('2d');
+        can.width = results.image.width; 
+        can.height = results.image.height;
+        
         ctx.save();
         ctx.clearRect(0,0,can.width,can.height);
         ctx.drawImage(results.segmentationMask, 0,0,can.width,can.height);
@@ -150,27 +122,39 @@
     });
 
     async function startAI() {
+        if(isAIActive) return;
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+            const stream = await navigator.mediaDevices.getUserMedia({video: {width: 640, height: 480}, audio: true});
             const v = document.getElementById('v-hidden');
             v.srcObject = stream;
+            
             v.onloadedmetadata = () => {
                 v.play();
-                const predict = async () => {
-                    await selfieSegmentation.send({image: v});
-                    requestAnimationFrame(predict);
-                };
-                predict();
+                isAIActive = true;
+                document.getElementById('status-txt').innerText = "AI ACTIV ✅";
+                
+                // Procesare frame cu frame fără blocaj
+                async function process() {
+                    if(isAIActive) {
+                        await selfieSegmentation.send({image: v});
+                        v.requestVideoFrameCallback(process); // Metodă nouă pentru fluiditate maximă
+                    }
+                }
+                
+                if ('requestVideoFrameCallback' in v) {
+                    v.requestVideoFrameCallback(process);
+                } else {
+                    setInterval(async () => { await selfieSegmentation.send({image: v}); }, 33);
+                }
             };
             initVumetru(stream);
-            alert("Sistemul AI a pornit!");
-        } catch(e) { alert("Eroare camera!"); }
+        } catch(e) { alert("Eroare Camera/Microfon!"); }
     }
 
     // --- VUMETRU ---
     function initVumetru(stream) {
         const can = document.getElementById('radial-canvas'), c = can.getContext('2d');
-        const ctx = new AudioContext();
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const src = ctx.createMediaStreamSource(stream);
         const ans = ctx.createAnalyser();
         ans.fftSize = 256; const data = new Uint8Array(ans.frequencyBinCount);
@@ -179,13 +163,10 @@
             requestAnimationFrame(draw); ans.getByteFrequencyData(data);
             c.clearRect(0,0,400,400);
             c.strokeStyle = "#ffffff"; c.lineWidth = 4;
-            c.shadowBlur = 10; c.shadowColor = "#ffffff";
             for(let i=0; i<60; i++){
                 let a = (i*6)*Math.PI/180, l = data[i] * 0.4;
-                c.beginPath(); 
-                c.moveTo(200+Math.cos(a)*80, 200+Math.sin(a)*80);
-                c.lineTo(200+Math.cos(a)*(80+l), 200+Math.sin(a)*(80+l)); 
-                c.stroke();
+                c.beginPath(); c.moveTo(200+Math.cos(a)*80, 200+Math.sin(a)*80);
+                c.lineTo(200+Math.cos(a)*(80+l), 200+Math.sin(a)*(80+l)); c.stroke();
             }
         } draw();
     }
@@ -194,18 +175,13 @@
         let b=document.getElementById('cam-box'); 
         b.style.display = (b.style.display==='block') ? 'none' : 'block'; 
     }
-    function startS() { 
-        if(!sFiles.length) return; 
-        document.getElementById('bg-s').src=sFiles[sIdx]; 
-        sIdx=(sIdx+1)%sFiles.length; 
-        sTim = setTimeout(startS, 3000); 
-    }
+    function startS() { if(!sFiles.length) return; document.getElementById('bg-s').src=sFiles[sIdx]; sIdx=(sIdx+1)%sFiles.length; sTim = setTimeout(startS, 3000); }
     function goFS() { document.documentElement.requestFullscreen(); }
 
     function drag(e) {
         let p1=0, p2=0, p3=0, p4=0;
         e.onmousedown = (m) => {
-            if(m.target.tagName === 'INPUT' || m.target.tagName === 'BUTTON') return;
+            if(m.target.tagName === 'INPUT') return;
             p3=m.clientX; p4=m.clientY;
             document.onmouseup = () => { document.onmouseup=null; document.onmousemove=null; };
             document.onmousemove = (m) => { p1=p3-m.clientX; p2=p4-m.clientY; p3=m.clientX; p4=m.clientY; e.style.top=(e.offsetTop-p2)+"px"; e.style.left=(e.offsetLeft-p1)+"px"; };
