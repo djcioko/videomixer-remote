@@ -3,75 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TELECOMANDĂ MV STUDIO</title>
+    <title>ADMIN MV STUDIO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { background: #0a0a0a; color: white; user-select: none; }
-        .btn-control { 
-            background: #1a1a1a; border: 1px solid #333; 
-            padding: 20px 10px; border-radius: 10px; 
-            font-weight: bold; text-transform: uppercase; font-size: 12px;
-            transition: 0.2s;
+        body { background: #050505; color: white; font-family: sans-serif; }
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { 
+            padding: 18px 5px; border-radius: 8px; font-weight: bold; 
+            font-size: 11px; text-transform: uppercase; border: 1px solid #333;
+            transition: 0.1s; background: #111;
         }
-        .btn-control:active { background: #ffaa00; color: black; transform: scale(0.95); }
-        .btn-special { background: #15803d; border-color: #22c55e; }
-        .btn-danger { background: #991b1b; border-color: #ef4444; }
+        .btn:active { background: #ffaa00; color: black; transform: scale(0.96); }
+        .btn-green { background: #065f46; border-color: #059669; }
+        .btn-orange { background: #9a3412; border-color: #ea580c; }
+        .btn-gray { background: #374151; border-color: #4b5563; }
     </style>
 </head>
 <body class="p-4">
 
-    <h1 class="text-center text-orange-500 font-bold mb-6">MV STUDIO REMOTE</h1>
+    <h2 class="text-orange-500 text-center font-black mb-4 tracking-widest">MV STUDIO CONTROL</h2>
 
-    <div class="grid grid-cols-2 gap-4">
-        <button class="btn-control" onclick="sendCmd('TOGGLE_VIDEO')">🎬 MOD VIDEO</button>
-        <button class="btn-control" onclick="sendCmd('TOGGLE_PHOTO')">🖼️ MOD FOTO</button>
-        <button class="btn-control" onclick="sendCmd('TOGGLE_SLIDE')">🎞️ SLIDESHOW</button>
-        <button class="btn-control" onclick="sendCmd('TOGGLE_CAM')">👤 CAMERA ON/OFF</button>
-
-        <button class="btn-control btn-special" onclick="sendCmd('START_AI')">🚀 PORNEȘTE AI</button>
-        <button class="btn-control" style="background: #4b5563;" onclick="sendCmd('TOGGLE_SETUP_UI')">⚙️ PANEL ON/OFF</button>
+    <p class="text-[10px] text-gray-500 mb-2 font-bold">SCHIMBĂ FUNDALUL PE LAPTOP:</p>
+    <div class="grid-layout mb-6">
+        <button class="btn btn-orange" onclick="sendCmd('TOGGLE_VIDEO')">🎬 FUNDAL VIDEO</button>
+        <button class="btn btn-orange" onclick="sendCmd('TOGGLE_PHOTO')">🖼️ FUNDAL FOTO</button>
+        <button class="btn btn-orange" onclick="sendCmd('TOGGLE_SLIDE')">🎞️ START SLIDESHOW</button>
+        <button class="btn" onclick="sendCmd('TOGGLE_CAM')">👤 CAMERA ON/OFF</button>
     </div>
 
-    <div class="mt-8 bg-gray-900 p-4 rounded-lg">
-        <label class="block text-xs mb-2 text-gray-400">TEXT PE ECRAN:</label>
-        <input type="text" id="txtInput" class="w-full bg-black border border-gray-700 p-3 rounded mb-3 text-white" placeholder="Scrie mesajul...">
-        <button class="w-full bg-orange-500 text-black font-bold py-3 rounded" onclick="sendText()">TRIMITE TEXT</button>
+    <p class="text-[10px] text-gray-500 mb-2 font-bold">CONTROL SISTEM LAPTOP:</p>
+    <div class="grid-layout mb-6">
+        <button class="btn btn-green" onclick="sendCmd('START_AI')">🚀 PORNEȘTE AI</button>
+        <button class="btn btn-gray" onclick="sendCmd('TOGGLE_SETUP_UI')">⚙️ PANEL ON/OFF</button>
     </div>
 
-    <div class="mt-4 grid grid-cols-2 gap-2">
-         <button class="btn-control text-[10px]" onclick="sendVal('SET_BRANDING_SIZE', 30)">TEXT MIC</button>
-         <button class="btn-control text-[10px]" onclick="sendVal('SET_BRANDING_SIZE', 80)">TEXT MARE</button>
+    <div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
+        <p class="text-[10px] text-gray-500 mb-2 font-bold text-center">MODIFICĂ TEXTUL:</p>
+        <input type="text" id="txtInput" class="w-full bg-black border border-gray-700 p-3 rounded mb-3 text-white text-center" placeholder="Ex: GINA LIVE">
+        <button class="w-full bg-orange-500 text-black font-black py-3 rounded shadow-lg" onclick="sendText()">TRIMITE PE ECRAN</button>
+        
+        <div class="flex gap-2 mt-3">
+            <button class="btn flex-1" onclick="sendVal('SET_BRANDING_SIZE', 25)">TEXT MIC</button>
+            <button class="btn flex-1" onclick="sendVal('SET_BRANDING_SIZE', 70)">TEXT MARE</button>
+        </div>
     </div>
 
     <script>
-        // CONFIGURARE FIREBASE (Asigură-te că e aceeași bază de date)
+        // Configurare Firebase
         firebase.initializeApp({ databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" });
         const db = firebase.database().ref('remote_control_cioko');
 
         function sendCmd(command) {
-            db.set({
-                cmd: command,
-                time: Date.now()
-            });
+            db.set({ cmd: command, time: Date.now() });
         }
 
         function sendText() {
             const val = document.getElementById('txtInput').value;
-            db.set({
-                cmd: 'SET_TEXT',
-                val: val,
-                time: Date.now()
-            });
+            db.set({ cmd: 'SET_TEXT', val: val, time: Date.now() });
         }
 
         function sendVal(command, value) {
-            db.set({
-                cmd: command,
-                val: value,
-                time: Date.now()
-            });
+            db.set({ cmd: command, val: value, time: Date.now() });
         }
     </script>
 </body>
