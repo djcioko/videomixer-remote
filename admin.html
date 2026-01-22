@@ -1,37 +1,73 @@
 <!DOCTYPE html>
-<html>
+<html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>TELECOMANDĂ DJ CIOKO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TELECOMANDĂ MV STUDIO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { background: #000; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
-        .btn { width: 100%; max-width: 300px; padding: 20px; margin: 10px 0; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
-        .btn-blue { background: #0056b3; color: white; }
-        .btn-green { background: #28a745; color: white; }
-        input { width: 90%; max-width: 280px; padding: 15px; margin: 10px 0; border-radius: 5px; border: 1px solid #444; background: #222; color: white; font-size: 16px; }
+        body { background: #0a0a0a; color: white; user-select: none; }
+        .btn-control { 
+            background: #1a1a1a; border: 1px solid #333; 
+            padding: 20px 10px; border-radius: 10px; 
+            font-weight: bold; text-transform: uppercase; font-size: 12px;
+            transition: 0.2s;
+        }
+        .btn-control:active { background: #ffaa00; color: black; transform: scale(0.95); }
+        .btn-special { background: #15803d; border-color: #22c55e; }
+        .btn-danger { background: #991b1b; border-color: #ef4444; }
     </style>
 </head>
-<body>
+<body class="p-4">
 
-    <h2>CONTROL MIXER</h2>
-    
-    <button class="btn btn-blue" onclick="send('START_AI', '')">1. ACTIVEAZĂ CAMERA</button>
-    <button class="btn btn-green" onclick="send('TOGGLE_CAM', 'on')">2. ARATĂ CAMERA</button>
-    <button class="btn btn-blue" onclick="send('TOGGLE_CAM', 'off')">3. ASCUNDE CAMERA</button>
+    <h1 class="text-center text-orange-500 font-bold mb-6">MV STUDIO REMOTE</h1>
 
-    <hr style="border: 0.5px solid #333; margin: 20px 0;">
+    <div class="grid grid-cols-2 gap-4">
+        <button class="btn-control" onclick="sendCmd('TOGGLE_VIDEO')">🎬 MOD VIDEO</button>
+        <button class="btn-control" onclick="sendCmd('TOGGLE_PHOTO')">🖼️ MOD FOTO</button>
+        <button class="btn-control" onclick="sendCmd('TOGGLE_SLIDE')">🎞️ SLIDESHOW</button>
+        <button class="btn-control" onclick="sendCmd('TOGGLE_CAM')">👤 CAMERA ON/OFF</button>
 
-    <input type="text" id="mesaj" placeholder="Scrie mesajul aici...">
-    <button class="btn btn-green" onclick="send('SET_TEXT', document.getElementById('mesaj').value)">TRIMITE TEXT PE ECRAN</button>
+        <button class="btn-control btn-special" onclick="sendCmd('START_AI')">🚀 PORNEȘTE AI</button>
+        <button class="btn-control" style="background: #4b5563;" onclick="sendCmd('TOGGLE_SETUP_UI')">⚙️ PANEL ON/OFF</button>
+    </div>
+
+    <div class="mt-8 bg-gray-900 p-4 rounded-lg">
+        <label class="block text-xs mb-2 text-gray-400">TEXT PE ECRAN:</label>
+        <input type="text" id="txtInput" class="w-full bg-black border border-gray-700 p-3 rounded mb-3 text-white" placeholder="Scrie mesajul...">
+        <button class="w-full bg-orange-500 text-black font-bold py-3 rounded" onclick="sendText()">TRIMITE TEXT</button>
+    </div>
+
+    <div class="mt-4 grid grid-cols-2 gap-2">
+         <button class="btn-control text-[10px]" onclick="sendVal('SET_BRANDING_SIZE', 30)">TEXT MIC</button>
+         <button class="btn-control text-[10px]" onclick="sendVal('SET_BRANDING_SIZE', 80)">TEXT MARE</button>
+    </div>
 
     <script>
+        // CONFIGURARE FIREBASE (Asigură-te că e aceeași bază de date)
         firebase.initializeApp({ databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" });
-        const remoteDb = firebase.database().ref('remote_control_cioko');
+        const db = firebase.database().ref('remote_control_cioko');
 
-        function send(command, value) {
-            remoteDb.set({
+        function sendCmd(command) {
+            db.set({
+                cmd: command,
+                time: Date.now()
+            });
+        }
+
+        function sendText() {
+            const val = document.getElementById('txtInput').value;
+            db.set({
+                cmd: 'SET_TEXT',
+                val: val,
+                time: Date.now()
+            });
+        }
+
+        function sendVal(command, value) {
+            db.set({
                 cmd: command,
                 val: value,
                 time: Date.now()
