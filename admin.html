@@ -3,65 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MV REMOTE</title>
+    <title>MV CONTROL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <style>
-        body { background-color: #000; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-        .btn-press:active { transform: scale(0.96); background-color: #111; }
-    </div>
-    </style>
 </head>
-<body class="text-white font-sans p-6">
+<body class="bg-black text-white p-6">
+    <h1 class="text-center font-bold text-zinc-500 mb-8 uppercase tracking-widest text-xs border-b border-zinc-800 pb-2">MV Studio Remote</h1>
 
-    <div class="text-center mb-8 border-b border-zinc-900 pb-4">
-        <h1 class="text-xl font-black tracking-widest text-zinc-400">REMOTE CONTROL</h1>
+    <div class="space-y-4 mb-10">
+        <button onclick="sendMedia('bg-v')" class="w-full bg-zinc-900 border border-zinc-700 p-5 rounded-2xl font-bold text-blue-400">▶ VIDEO BACKGROUND</button>
+        <button onclick="sendMedia('bg-i')" class="w-full bg-zinc-900 border border-zinc-700 p-5 rounded-2xl font-bold text-green-400">🖼️ FOTO BACKGROUND</button>
+        <button onclick="sendMedia('bg-s')" class="w-full bg-zinc-900 border border-zinc-700 p-5 rounded-2xl font-bold text-purple-400">📸 SLIDESHOW</button>
     </div>
 
-    <div class="space-y-3 mb-10">
-        <p class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest ml-1">Sursă Ecran</p>
-        <button onclick="sendMedia('bg-v')" class="w-full bg-zinc-900 border border-zinc-800 p-5 rounded-2xl font-bold text-blue-400 btn-press text-left flex justify-between items-center">
-            VIDEO BACKGROUND <span>▶</span>
-        </button>
-        <button onclick="sendMedia('bg-i')" class="w-full bg-zinc-900 border border-zinc-800 p-5 rounded-2xl font-bold text-green-400 btn-press text-left flex justify-between items-center">
-            FOTO FUNDAL <span>🖼️</span>
-        </button>
-        <button onclick="sendMedia('bg-s')" class="w-full bg-zinc-900 border border-zinc-800 p-5 rounded-2xl font-bold text-purple-400 btn-press text-left flex justify-between items-center">
-            SLIDESHOW <span>📸</span>
-        </button>
+    <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 mb-6">
+        <input id="msg" type="text" placeholder="TEXT BRANDING..." class="w-full bg-black p-4 rounded-xl mb-3 outline-none focus:border-white border border-transparent">
+        <button onclick="sendText()" class="w-full bg-white text-black font-black p-4 rounded-xl uppercase">UPDATE TEXT</button>
     </div>
 
-    <div class="space-y-3 mb-10">
-        <p class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest ml-1">Mesaj Branding</p>
-        <input id="msg" type="text" placeholder="STUDIO MV..." class="w-full bg-zinc-950 border border-zinc-800 p-5 rounded-2xl outline-none focus:border-blue-500 transition-all text-lg">
-        <button onclick="sendText()" class="w-full bg-white text-black p-5 rounded-2xl font-black uppercase btn-press">
-            ACTUALIZEAZĂ TEXT
-        </button>
-    </div>
-
-    <div class="pt-6 border-t border-zinc-900">
-        <button onclick="sendCmd('FULLSCREEN')" class="w-full bg-blue-600 p-6 rounded-2xl font-black text-white text-lg btn-press shadow-lg shadow-blue-900/30">
-            ENTER FULL SCREEN
-        </button>
+    <div class="grid grid-cols-2 gap-4">
+        <button onclick="sendCmd('TOGGLE_LOGO')" class="bg-zinc-800 p-5 rounded-2xl font-bold text-xs">LOGO ON/OFF</button>
+        <button onclick="sendCmd('FULLSCREEN')" class="bg-blue-600 p-5 rounded-2xl font-bold text-xs">FULL SCREEN</button>
     </div>
 
     <script>
-        const config = { databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" };
-        firebase.initializeApp(config);
+        firebase.initializeApp({ databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" });
         const db = firebase.database().ref('remote_control_cioko');
 
-        function sendText() { 
-            db.update({ text: document.getElementById('msg').value, time: Date.now() }); 
-        }
-
-        function sendMedia(type) { 
-            db.update({ media_type: type, last_click: Date.now() }); 
-        }
-
-        function sendCmd(cmd) { 
-            db.update({ cmd: cmd, time: Date.now() }); 
-        }
+        function sendText() { db.update({ text: document.getElementById('msg').value, time: Date.now() }); }
+        function sendMedia(type) { db.update({ media_type: type, time: Date.now() }); }
+        function sendCmd(cmd) { db.update({ cmd: cmd, time: Date.now() }); }
     </script>
 </body>
 </html>
