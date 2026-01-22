@@ -1,0 +1,34 @@
+<script>
+    // Configurare inițială
+    firebase.initializeApp({ databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" });
+    let db = firebase.database().ref('test_dj');
+    let remoteDb = firebase.database().ref('remote_control_cioko'); // Referință nouă pentru comenzi
+    let sFiles=[], sIdx=0, sTim, mTim;
+
+    // --- TOATE FUNCȚIILE TALE EXISTENTE (startAI, initVumetru, tgL, etc.) ---
+    // (Păstrează-le exact cum le ai în fișierul original)
+
+    // *** MODIFICAREA NOUĂ: REMOTE LISTENER ***
+    remoteDb.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        // Executăm doar dacă comanda e proaspătă (sub 5 secunde)
+        if (Date.now() - data.time < 5000) {
+            console.log("Comandă primită:", data.cmd);
+
+            switch(data.cmd) {
+                case 'TOGGLE_VIDEO': tgL('bg-v', 'btn-v'); break;
+                case 'TOGGLE_PHOTO': tgL('bg-i', 'btn-i'); break;
+                case 'TOGGLE_SLIDE': tgL('bg-s', 'btn-s'); break;
+                case 'TOGGLE_CAM': tgC(); break;
+                case 'START_AI': startAI(); break;
+                case 'SET_TEXT': document.getElementById('branding').innerText = data.val; break;
+                case 'SET_BRANDING_SIZE': document.getElementById('branding').style.fontSize = data.val + 'px'; break;
+                case 'FULLSCREEN': goFS(); break;
+            }
+        }
+    });
+
+    // Păstrează restul funcțiilor (loadF, loadFolder, drag, etc.)
+</script>

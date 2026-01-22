@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CONSOLA ADMIN - DJ CIOKO</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { background: #050505; color: white; font-family: sans-serif; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .card { background: #111; padding: 15px; border: 1px solid #333; border-radius: 10px; }
+        h2 { font-size: 14px; color: #ffaa00; margin-top: 0; }
+        .btn { width: 100%; padding: 15px; margin: 5px 0; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .btn-blue { background: #1d4ed8; color: white; }
+        .btn-red { background: #b91c1c; color: white; }
+        .btn-green { background: #15803d; color: white; }
+        input { width: 90%; padding: 10px; background: #000; border: 1px solid #444; color: white; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>EMISIE (ON/OFF)</h2>
+        <button class="btn btn-blue" onclick="send('START_AI', '')">1. ACTIVEAZĂ AI LA DJ</button>
+        <button class="btn btn-green" onclick="send('TOGGLE_CAM', '')">2. AFIȘEAZĂ CAMERA</button>
+        <button class="btn btn-red" onclick="send('FULLSCREEN', '')">FULLSCREEN</button>
+    </div>
+
+    <div class="card">
+        <h2>SCHIMBĂ TEXTUL</h2>
+        <input type="text" id="t-val" placeholder="Scrie mesaj...">
+        <button class="btn btn-blue" onclick="send('SET_TEXT', document.getElementById('t-val').value)">ACTUALIZEAZĂ TEXT</button>
+        <input type="range" min="20" max="150" value="40" onchange="send('SET_BRANDING_SIZE', this.value)">
+    </div>
+
+    <div class="card">
+        <h2>FUNDALURI</h2>
+        <button class="btn btn-green" onclick="send('TOGGLE_VIDEO', '')">MOD VIDEO</button>
+        <button class="btn btn-green" onclick="send('TOGGLE_PHOTO', '')">MOD FOTO</button>
+        <button class="btn btn-green" onclick="send('TOGGLE_SLIDE', '')">MOD SLIDE</button>
+    </div>
+
+    <script>
+        firebase.initializeApp({ databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" });
+        const remoteDb = firebase.database().ref('remote_control_cioko');
+
+        function send(command, value) {
+            remoteDb.set({
+                cmd: command,
+                val: value,
+                time: Date.now()
+            });
+        }
+    </script>
+</body>
+</html>
