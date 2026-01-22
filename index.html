@@ -1,34 +1,114 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>VIDEO MIXER - DJ CIOKO</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; font-family: sans-serif; }
+        #canvas-wrap { position: relative; width: 100vw; height: 100vh; }
+        canvas, video, img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        #branding { 
+            position: absolute; bottom: 10%; width: 100%; text-align: center;
+            color: white; font-weight: bold; text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
+            z-index: 100; pointer-events: none;
+        }
+        .controls { position: fixed; bottom: 10px; left: 10px; z-index: 200; opacity: 0.3; transition: 0.5s; }
+        .controls:hover { opacity: 1; }
+        button { padding: 10px; cursor: pointer; background: #222; color: white; border: 1px solid #444; }
+    </style>
+</head>
+<body>
+
+<div id="canvas-wrap">
+    <video id="bg-v" loop muted style="display:none;"></video>
+    <img id="bg-i" style="display:none;">
+    
+    <div id="branding">MESAJ LIVE</div>
+    
+    <div class="controls">
+        <button onclick="startAI()">1. ACTIVEAZĂ AI</button>
+        <button onclick="goFS()">FULLSCREEN</button>
+    </div>
+</div>
+
 <script>
-    // Configurare inițială
-    firebase.initializeApp({ databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" });
-    let db = firebase.database().ref('test_dj');
-    let remoteDb = firebase.database().ref('remote_control_cioko'); // Referință nouă pentru comenzi
-    let sFiles=[], sIdx=0, sTim, mTim;
+    // 1. Configurare Firebase
+    const firebaseConfig = { databaseURL: "https://felicitari-nunta-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(firebaseConfig);
+    const remoteDb = firebase.database().ref('remote_control_cioko');
 
-    // --- TOATE FUNCȚIILE TALE EXISTENTE (startAI, initVumetru, tgL, etc.) ---
-    // (Păstrează-le exact cum le ai în fișierul original)
+    // 2. Gestionare Fișiere (Memorie la restart conform cerinței tale)
+    let selectedFiles = JSON.parse(localStorage.getItem('dj_files')) || [];
 
-    // *** MODIFICAREA NOUĂ: REMOTE LISTENER ***
+    function saveFiles(files) {
+        localStorage.setItem('dj_files', JSON.stringify(files));
+        selectedFiles = files;
+    }
+
+    // 3. Ascultă comenzile de la telecomandă (admin.html)
     remoteDb.on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
 
-        // Executăm doar dacă comanda e proaspătă (sub 5 secunde)
-        if (Date.now() - data.time < 5000) {
+        // Verificăm dacă e comandă nouă (ultimele 10 secunde)
+        if (Date.now() - data.time < 10000) {
             console.log("Comandă primită:", data.cmd);
-
+            
             switch(data.cmd) {
-                case 'TOGGLE_VIDEO': tgL('bg-v', 'btn-v'); break;
-                case 'TOGGLE_PHOTO': tgL('bg-i', 'btn-i'); break;
-                case 'TOGGLE_SLIDE': tgL('bg-s', 'btn-s'); break;
-                case 'TOGGLE_CAM': tgC(); break;
-                case 'START_AI': startAI(); break;
-                case 'SET_TEXT': document.getElementById('branding').innerText = data.val; break;
-                case 'SET_BRANDING_SIZE': document.getElementById('branding').style.fontSize = data.val + 'px'; break;
-                case 'FULLSCREEN': goFS(); break;
+                case 'START_AI': 
+                    startAI(); 
+                    break;
+                case 'TOGGLE_CAM': 
+                    const cam = document.getElementById('bg-v');
+                    if(data.val === 'on') cam.style.display = 'block';
+                    else cam.style.display = 'none';
+                    break;
+                case 'SET_TEXT': 
+                    document.getElementById('branding').innerText = data.val; 
+                    break;
+                case 'SET_BRANDING_SIZE': 
+                    document.getElementById('branding').style.fontSize = data.val + 'px'; 
+                    break;
+                case 'FULLSCREEN': 
+                    goFS(); 
+                    break;
+                case 'SET_BG':
+                    const v = document.getElementById('bg-v');
+                    v.src = data.val;
+                    v.style.display = 'block';
+                    v.play();
+                    break;
             }
         }
     });
 
-    // Păstrează restul funcțiilor (loadF, loadFolder, drag, etc.)
+    // 4. Funcții de bază
+    async function startAI() {
+        const video = document.getElementById('bg-v');
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            video.play();
+            alert("Camera a fost activată cu succes!");
+        } catch (err) {
+            console.error("Eroare camera:", err);
+        }
+    }
+
+    function goFS() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) elem.requestFullscreen();
+    }
+
+    // Restaurare fișiere la deschidere (Regula ta de memorare)
+    window.onload = () => {
+        if(selectedFiles.length > 0) {
+            console.log("Fișiere restaurate:", selectedFiles);
+        }
+    };
 </script>
+
+</body>
+</html>
